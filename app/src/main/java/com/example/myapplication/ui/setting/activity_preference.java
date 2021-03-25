@@ -119,10 +119,10 @@ public class activity_preference extends PreferenceActivity {
             fetchLocation();
         }
 
-        boolean noti = sp.getBoolean("NOTI", false);
-        if(noti){
-            startActivity(new Intent(this, com.example.myapplication.ui.setting.activity_notification.class));
-        }
+//         boolean noti = sp.getBoolean("NOTI", false);
+//         if(noti){
+//             startActivity(new Intent(this, com.example.myapplication.ui.setting.activity_notification.class));
+//         }
 
         CheckBoxPreference chk_location = (CheckBoxPreference)findPreference("fetch_location");
         chk_location.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
