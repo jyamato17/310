@@ -68,7 +68,7 @@ public class NewsFragment extends Fragment
 
         swipeRefreshLayout = getActivity().findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(this);
-        swipeRefreshLayout.setColorSchemeResources(R.color.design_default_color_on_primary);
+        swipeRefreshLayout.setColorSchemeResources(R.color.loadingScroller);
 
         topHeadline = getActivity().findViewById(R.id.topheadlines);
         recyclerView = getActivity().findViewById(R.id.recyclerView);
@@ -91,7 +91,7 @@ public class NewsFragment extends Fragment
 
         ApiInterface apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
-        String[] tempKeywords = {"torrance", "coronavirus"};
+        String[] tempKeywords = {"los angeles", "coronavirus"};
         String concept = "https://en.wikipedia.org/wiki/Coronavirus";
 
         Call<News> call;

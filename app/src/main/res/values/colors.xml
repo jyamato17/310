@@ -10,4 +10,5 @@
 
     <color name="colorBackground">#F9F9FA</color>
     <color name="colorTextTitle">#262626</color>
+    <color name="loadingScroller">#ff00cc</color>
 </resources>
