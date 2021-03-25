@@ -1,4 +1,4 @@
-# This is README for Team #36 for Map Covid. 
+# This is Team #36 for Map Covid. 
 
 To find the file, go to master branch please. 
 
