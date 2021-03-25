@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/android.R.id.list"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/pop_bg">
+
+    <TextView
+        android:id="@+id/pop_window"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="App Version 1.0
+        \nTeam Member: Yifeng Yu, Cole Howard, Yo-Han Kang, Jonah Yamato, Yong Shin"
+        android:textColor="#ffffff"
+
+        />
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+
+        >
+
+
+    </ListView>
+
+</LinearLayout>

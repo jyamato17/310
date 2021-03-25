@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:title="About"
+        android:key="BUTTON"
+        android:summary="About the Team and App"
+        />
+    <Preference
+        android:title="Notify me"
+        android:key="NOTIF"
+        android:summary="Notification setting"
+        />
+
+    <PreferenceCategory
+        android:title="Enable Night Mode"
+        >
+
+        <CheckBoxPreference
+            android:title="Night Mode"
+            android:key="NIGHT"
+            android:defaultValue="false"
+            android:summaryOn="Night mode is activated"
+            android:summaryOff="Night mode is deactivated" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Screen Orientation">
+        <ListPreference
+            android:title="Orientation"
+            android:key="ORIENTATION"
+            android:entries="@array/items_name"
+            android:entryValues="@array/items_value"
+            android:defaultValue="false"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Notification">
+        <CheckBoxPreference
+            android:title="Notification On/Off"
+            android:key="NOTI"
+            android:defaultValue="false"
+            android:summaryOn="Notification is activated"
+            android:summaryOff="Notification is deactivated" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Location Sharing"
+        >
+        <CheckBoxPreference
+            android:title="Location Sharing On/Off"
+            android:key="fetch_location"
+            android:defaultValue="false"
+            android:summaryOn="Sharing is activated"
+            android:summaryOff="Sharing is deactivated" />
+    </PreferenceCategory>
+
+
+
+
+
+</PreferenceScreen>

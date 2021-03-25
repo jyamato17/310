@@ -75,4 +75,9 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'com.google.maps.android:maps-utils-ktx:2.4.0'
     implementation 'com.opencsv:opencsv:5.4'
+
+    // setting
+    implementation 'com.google.android.gms:play-services-location:15.0.1'
+
+
 }
