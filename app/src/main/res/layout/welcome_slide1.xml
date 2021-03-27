@@ -18,27 +18,20 @@
     <!--    android:fontFamily="@font/brandon_grotesque_black"-->
 
     <TextView
-        android:id="@+id/slider_heading"
+        android:id="@+id/slider_heading1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="174dp"
-        android:layout_marginEnd="178dp"
         android:gravity="center"
         android:text="@string/first_slide_title"
         android:textSize="25sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/slider_image" />
 
     <TextView
-        android:id="@+id/slider_desc"
+        android:id="@+id/slider_desc1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="176dp"
-        android:layout_marginLeft="176dp"
-        android:layout_marginEnd="176dp"
-        android:layout_marginRight="176dp"
         android:gravity="center"
         android:padding="10dp"
         android:text="@string/first_slide_desc"
