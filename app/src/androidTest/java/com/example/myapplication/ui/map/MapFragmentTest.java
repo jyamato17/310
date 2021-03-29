@@ -46,7 +46,13 @@ public class MapFragmentTest {
         assertNotNull("addHeatMap");
     }
 
-    
+    @Test
+    public void testDataParser()
+    {
+        assertNotNull("readItems");
+    }
+
+
 
 
 
