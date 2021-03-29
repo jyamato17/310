@@ -1,26 +1,21 @@
 package com.example.myapplication.ui.news;
 
-import android.app.SearchManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.util.Pair;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,12 +46,18 @@ public class NewsFragment extends Fragment
     private Adapter adapter;
     private TextView topHeadline;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private RelativeLayout errorLayout;
+    private ImageView errorImage;
+    private TextView errorTitle, errorMessage;
+    private Button btnRetry;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
         View root = inflater.inflate(R.layout.activity_news, container, false);
         super.onCreate(savedInstanceState);
+
+        setRetainInstance(true);
 
         return root;
     }
@@ -78,20 +79,32 @@ public class NewsFragment extends Fragment
         recyclerView.setNestedScrollingEnabled(false);
 
         onLoadingSwipeRefresh();
+
+        errorLayout = getActivity().findViewById(R.id.errorLayout);
+        errorImage = getActivity().findViewById(R.id.errorImage);
+        errorTitle = getActivity().findViewById(R.id.errorTitle);
+        errorMessage = getActivity().findViewById(R.id.errorMessage);
+        btnRetry = getActivity().findViewById(R.id.btnRetry);
     }
 
     @Override
     public void onRefresh() {
-        LoadJson();
+        LoadJson("");
     }
 
-    public void LoadJson() {
+    public void LoadJson(String location) {
 
+        errorLayout.setVisibility(View.GONE);
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
         swipeRefreshLayout.setRefreshing(true);
 
         ApiInterface apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
-        String[] tempKeywords = {"los angeles", "coronavirus"};
+        if (location.isEmpty()) {
+            location = "los angeles";
+        }
+
+        String[] tempKeywords = {location, "covid"};
         String concept = "https://en.wikipedia.org/wiki/Coronavirus";
 
         Call<News> call;
@@ -126,6 +139,11 @@ public class NewsFragment extends Fragment
                     topHeadline.setVisibility(View.VISIBLE);
                 } else {
                     topHeadline.setVisibility(View.INVISIBLE);
+
+                    showErrorMessage(
+                            R.drawable.no_result,
+                            "No Result",
+                            "Please Try Again!");
                 }
                 swipeRefreshLayout.setRefreshing(false);
             }
@@ -134,6 +152,12 @@ public class NewsFragment extends Fragment
             public void onFailure(Call<News> call, Throwable throwable) {
                 topHeadline.setVisibility(View.INVISIBLE);
                 swipeRefreshLayout.setRefreshing(false);
+
+                showErrorMessage(
+                        R.drawable.oops,
+                        "Oops..",
+                        "Network failure, Please Try Again\n"+
+                                throwable.toString());
             }
         });
     }
@@ -170,7 +194,32 @@ public class NewsFragment extends Fragment
 
     private void onLoadingSwipeRefresh() {
         swipeRefreshLayout.post(
-                this::LoadJson
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        LoadJson("keyword");
+                    }
+                }
         );
+    }
+
+    private void showErrorMessage(int imageView, String title, String message){
+
+        if (errorLayout.getVisibility() == View.GONE) {
+            errorLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setVisibility(View.GONE);
+        }
+
+        errorImage.setImageResource(imageView);
+        errorTitle.setText(title);
+        errorMessage.setText(message);
+
+        btnRetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onLoadingSwipeRefresh();
+            }
+        });
+
     }
 }

@@ -14,6 +14,7 @@ import java.util.Random;
 
 public class Utils {
 
+    /*
     public static ColorDrawable[] vibrantLightColorList =
             {
                     new ColorDrawable(Color.parseColor("#ffeead")),
@@ -26,10 +27,10 @@ public class Utils {
                     new ColorDrawable(Color.parseColor("#d93947"))
             };
 
-    public static ColorDrawable getRandomDrawbleColor() {
+    public static ColorDrawable getRandomDrawableColor() {
         int idx = new Random().nextInt(vibrantLightColorList.length);
         return vibrantLightColorList[idx];
-    }
+    }*/
 
     public static String DateToTimeFormat(String oldStringDate){
         PrettyTime p = new PrettyTime(new Locale(getCountry()));
@@ -53,8 +54,8 @@ public class Utils {
             @SuppressLint("SimpleDateFormat") Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(oldStringDate);
             newDate = dateFormat.format(date);
         } catch (ParseException e) {
-            e.printStackTrace();
-            newDate = oldStringDate;
+            //e.printStackTrace();
+            newDate = "Date not found";
         }
 
         return newDate;
@@ -62,13 +63,7 @@ public class Utils {
 
     public static String getCountry(){
         Locale locale = Locale.getDefault();
-        String country = String.valueOf(locale.getCountry());
-        return country.toLowerCase();
-    }
-
-    public static String getLanguage(){
-        Locale locale = Locale.getDefault();
-        String country = String.valueOf(locale.getLanguage());
+        String country = locale.getCountry();
         return country.toLowerCase();
     }
 }
