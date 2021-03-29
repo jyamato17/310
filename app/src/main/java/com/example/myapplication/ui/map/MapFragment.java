@@ -106,24 +106,11 @@ public class MapFragment extends Fragment {
         // Get the data: latitude/longitude positions of police stations.
         try {
             latLngs = readItems();
-            for(int i = 0; i < latLngs.size(); i++)
-            {
-                System.out.println(latLngs.get(i).getIntensity());
-                System.out.println(latLngs.get(i).getPoint());
-            }
+
         } catch (JSONException e) {
-            //Toast.makeText(context, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
         }
 
-
-//        latLngs.add(new LatLng(34.021338007781054, -118.28794802694372));
-//        latLngs.add(new LatLng(33.9, -118.1));
-
-//        for (int i = 0; i < 100; i++) {
-//            latLngs.add(new LatLng(34.02133, -118.2879));
-//        }
-
-        // Create a heat map tile provider, passing it the latlngs of the police stations.
         HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
                 .weightedData(latLngs)
                 .radius(50)
@@ -184,6 +171,7 @@ public class MapFragment extends Fragment {
 
                 String name = lines[0];
                 name.trim();
+
                 if(name.contains("City of "))
                 {
                     name = name.substring(8, name.length());
@@ -196,15 +184,13 @@ public class MapFragment extends Fragment {
                 {
                     name = name.substring(17, name.length());
                 }
-                name.trim();
                 city city = null;
-                for(int i = 0; i < cities.size() / 10; i++)
+                for(int i = 0; i < cities.size()/2; i++)
                 {
+                    //System.out.println(cities.get(i).getName().trim() + " " + name.trim());
                     if(cities.get(i).getName().trim().equals(name.trim()))
                     {
-//                        System.out.println(name.trim());
-//                        System.out.println(lines[1]);
-//                        System.out.println(cities.get(i).getCoordinates());
+                        System.out.println(name.trim());
                         city = cities.get(i);
                         break;
                     }
@@ -213,13 +199,8 @@ public class MapFragment extends Fragment {
                 String cases = lines[1];
                 double numCases = Double.parseDouble(cases);
                 if(city != null) {
-                    //System.out.println(city.getName());
                     WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), 1);
                     result.add(coord);
-                    System.out.println(coord);
-//                    for (int i = 0; i < numCases; i++) {
-//                        result.add(city.getCoordinates());
-//                    }
                 }
 
             }
