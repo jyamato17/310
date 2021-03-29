@@ -17,4 +17,9 @@
     <string name="next">Next</string>
     <string name="skip">Skip</string>
     <string name="let_get_started">Lets Get Started</string>
+    <string name="NIGHT_MODE">1</string>
+    <string name="NIGHT">1</string>
+    <string name="BUTTON">2</string>
+    <string name="Night_Mode">1</string>
+    <string name="fetch_location">11</string>
 </resources>

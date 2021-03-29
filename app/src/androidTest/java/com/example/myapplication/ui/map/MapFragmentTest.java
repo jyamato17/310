@@ -14,7 +14,7 @@ import androidx.test.filters.LargeTest;
 
 public class MapFragmentTest {
 
-    @Rule
-    public ActivityTestRule<MainActivity> activityActivityTestRule = new ActivityTestRule<MainActivity>(MainActivity.class);
+
+    
 
 }

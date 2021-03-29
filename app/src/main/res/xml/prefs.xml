@@ -2,6 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
+        android:id="@+id/about"
         android:title="About"
         android:key="BUTTON"
         android:summary="About the Team and App"
@@ -13,6 +14,7 @@
         />
 
     <PreferenceCategory
+        android:id="@+id/nightMode"
         android:title="Enable Night Mode"
         >
 
