@@ -67,7 +67,7 @@ public class NewsDetailActivity extends AppCompatActivity
         String mAuthor = intent.getStringExtra("author");
 
         RequestOptions requestOptions = new RequestOptions();
-        requestOptions.error(Utils.getRandomDrawbleColor());
+        //requestOptions.error(Utils.getRandomDrawableColor());
 
         Glide.with(this)
                 .load(mImg)
@@ -90,7 +90,6 @@ public class NewsDetailActivity extends AppCompatActivity
         time.setText(mSource + author + " \u2022 " + Utils.DateToTimeFormat(mDate));
 
         initWebView(mUrl);
-
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -136,13 +135,5 @@ public class NewsDetailActivity extends AppCompatActivity
             titleAppbar.setVisibility(View.GONE);
             isHideToolbarView = !isHideToolbarView;
         }
-
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.news_menu_news, menu);
-        return true;
-    }
-
 }

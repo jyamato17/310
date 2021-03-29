@@ -1,51 +1,73 @@
+//
 //package com.example.myapplication.ui.setting;
 //
-//import android.content.Context;
+//import android.preference.CheckBoxPreference;
 //
-//import androidx.test.InstrumentationRegistry;
-//import androidx.test.ext.junit.runners.AndroidJUnit4;
 //import androidx.test.rule.ActivityTestRule;
 //
-//import junit.framework.TestCase;
+//import static org.hamcrest.MatcherAssert.assertThat;
+//import com.example.myapplication.R;
+//import static org.hamcrest.Matchers.is;
+//import static com.google.android.apps.common.testing.ui.espresso.matcher.PreferenceMatchers.withKey;
+//import static com.google.android.apps.common.testing.ui.espresso.matcher.PreferenceMatchers.withSummary;
+//import static com.google.android.apps.common.testing.ui.espresso.matcher.PreferenceMatchers.withSummaryText;
+//import static com.google.android.apps.common.testing.ui.espresso.matcher.PreferenceMatchers.withTitle;
+//import static com.google.android.apps.common.testing.ui.espresso.matcher.PreferenceMatchers.withTitleText;
+//import static com.google.android.apps.common.testing.ui.espresso.matcher.PreferenceMatchers.isEnabled;
+//import static org.hamcrest.Matchers.not;
+//import com.google.android.apps.common.testing.ui.testapp.test.R;
+//import android.test.InstrumentationTestCase;
+//import android.preference.CheckBoxPreference;
+//import android.preference.EditTextPreference;
+//
 //
 //import org.junit.Rule;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
 //
-//import static androidx.test.espresso.Espresso.onData;
-//import static java.util.EnumSet.allOf;
-//import static org.hamcrest.Matchers.is;
+//import static org.hamcrest.CoreMatchers.not;
+//import static org.junit.Assert.*;
 //
-//@RunWith(AndroidJUnit4.class)
-//class preference_activityTest extends TestCase {
+//public class activity_preferenceTest extends InstrumentationTestCase{
 //    @Rule
-//    public ActivityTestRule<activity_preference> settingFragmentActivityTestRule
-//            = new ActivityTestRule<activity_preference>(activity_preference.class);
+//    public ActivityTestRule<activity_preference> pActivityTestRule
+//            = new ActivityTestRule<>(activity_preference.class);
 //
-//    private activity_preference sFragment =  null;
+//    public void testWithSummary() {
+//        CheckBoxPreference pref = new CheckBoxPreference(getInstrumentation().getContext());
+//        pref.setSummary("Night mode is activated");
+//        assertThat(pref, withSummary("Night mode is activated");
+//        assertThat(pref, not(withSummary("Night Mode")));
 //
-//    public void setUp() throws Exception {
-//        super.setUp();
+//        assertThat(pref, withSummaryText("Hello World"));
+//        assertThat(pref, not(withSummaryText(("Hello Mars"))));
+//        assertThat(pref, withSummaryText(is("Hello World")));
 //    }
 //
-//    @Test
-//    public void clickListPreference() throws Exception{
-//
-//        // Check if it is displayed
-//        Context appContext = InstrumentationRegistry.getTargetContext();
-//
-//        onData(allOf(
-//                is(instanceOf(activity_preference.class)),
-//                withKey(appContext.getResources().getString(R.string.pref_units_key))))
-//                .check(matches(isDisplayed()));
-//
-//        // Check if click is working
-//        onData(allOf(
-//                is(instanceOf(activity_preference.class)),
-//                withKey(appContext.getResources().getString(R.string.pref_units_key))))
-//                .onChildView(withText(appContext.getResources()
-//                        .getString(R.string.pref_units_label))).perform(click());
+//    public void testWithTitle() {
+//        CheckBoxPreference pref = new CheckBoxPreference(getInstrumentation().getContext());
+//        pref.setTitle("Night Mode");
+//        assertThat(pref, withTitle(R.string.other_string));
+//        assertThat(pref, not(withTitle(R.string.something)));
+//        assertThat(pref, withTitleText("Goodbye!!"));
+//        assertThat(pref, not(withTitleText(("Hello Mars"))));
+//        assertThat(pref, withTitleText(is("Goodbye!!")));
 //    }
-//    public void tearDown() throws Exception {
+//    public void testIsEnabled() {
+//        CheckBoxPreference pref = new CheckBoxPreference(getInstrumentation().getContext());
+//        pref.setEnabled(true);
+//        assertThat(pref, isEnabled());
+//        pref.setEnabled(false);
+//        assertThat(pref, not(isEnabled()));
+//        EditTextPreference pref2 = new EditTextPreference(getInstrumentation().getContext());
+//        pref2.setEnabled(true);
+//        assertThat(pref2, isEnabled());
+//        pref2.setEnabled(false);
+//        assertThat(pref2, not(isEnabled()));
+//    }
+//    public void testWithKey() {
+//        CheckBoxPreference pref = new CheckBoxPreference(getInstrumentation().getContext());
+//        pref.setKey("foo");
+//        assertThat(pref, withKey("foo"));
+//        assertThat(pref, not(withKey("bar")));
+//        assertThat(pref, withKey(is("foo")));
 //    }
 //}
