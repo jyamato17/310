@@ -2,6 +2,7 @@ package com.example.myapplication.ui.loading_screen;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,73 +36,65 @@ public class OnBoarding extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        System.out.println(getSharedPreferences("BOOT_PREF", MODE_PRIVATE).getAll());   //firstboot shouldn't be printing here. It's declared below which is commented out...*************
-//        boolean firstboot = getSharedPreferences("BOOT_PREF", MODE_PRIVATE).getBoolean("firstboot", true);
-//        System.out.println(firstboot);
-//        if (!firstboot){
-//            launchHomeScreen();
-//            finish();
-//        }
-//        getSharedPreferences("BOOT_PREF", MODE_PRIVATE).edit().putBoolean("firstboot", false).commit();
-
-        //MAYBE THIS INSTEAD OF UP ABOVE?
-//        SharedPreferences sp = getSharedPreferences("OURINFO", MODE_PRIVATE);
-//        Editor ed = sp.edit();
-//        ed.putBoolean("active", true);
-//        ed.commit();
-
-        // Making notification bar transparent
-        if (Build.VERSION.SDK_INT >= 21) {
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        boolean firstboot = getSharedPreferences("BOOT_PREF", MODE_PRIVATE).getBoolean("firstboot", true);
+        if (!firstboot){
+            launchHomeScreen();
+            finish();
         }
-
-        setContentView(R.layout.activity_on_boarding);
-
-        viewPager = (ViewPager) findViewById(R.id.slider);
-        dotsLayout = (LinearLayout) findViewById(R.id.dots);
-        btnSkip = (Button) findViewById(R.id.skip_btn);
-        btnNext = (Button) findViewById(R.id.next_btn);
-
-
-        // layouts of all welcome sliders
-        // add few more layouts if you want
-        layouts = new int[]{
-                R.layout.welcome_slide1,
-                R.layout.welcome_slide2,
-                R.layout.welcome_slide3,
-                R.layout.welcome_slide4};
-
-        // adding bottom dots
-        addBottomDots(0);
-
-        // making notification bar transparent
-        changeStatusBarColor();
-
-        myViewPagerAdapter = new MyViewPagerAdapter();
-        viewPager.setAdapter(myViewPagerAdapter);
-        viewPager.addOnPageChangeListener(viewPagerPageChangeListener);
-
-        btnSkip.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchHomeScreen();
+        else {
+            // Making notification bar transparent
+            if (Build.VERSION.SDK_INT >= 21) {
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
             }
-        });
 
-        btnNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // checking for last page
-                // if last page home screen will be launched
-                int current = getItem(+1);
-                if (current < layouts.length) {
-                    // move to next screen
-                    viewPager.setCurrentItem(current);
-                } else {
+            setContentView(R.layout.activity_on_boarding);
+
+            viewPager = (ViewPager) findViewById(R.id.slider);
+            dotsLayout = (LinearLayout) findViewById(R.id.dots);
+            btnSkip = (Button) findViewById(R.id.skip_btn);
+            btnNext = (Button) findViewById(R.id.next_btn);
+
+
+            // layouts of all welcome sliders
+            // add few more layouts if you want
+            layouts = new int[]{
+                    R.layout.welcome_slide1,
+                    R.layout.welcome_slide2,
+                    R.layout.welcome_slide3,
+                    R.layout.welcome_slide4};
+
+            // adding bottom dots
+            addBottomDots(0);
+
+            // making notification bar transparent
+            changeStatusBarColor();
+
+            myViewPagerAdapter = new MyViewPagerAdapter();
+            viewPager.setAdapter(myViewPagerAdapter);
+            viewPager.addOnPageChangeListener(viewPagerPageChangeListener);
+
+            btnSkip.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
                     launchHomeScreen();
                 }
-            }
-        });
+            });
+
+            btnNext.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // checking for last page
+                    // if last page home screen will be launched
+                    int current = getItem(+1);
+                    if (current < layouts.length) {
+                        // move to next screen
+                        viewPager.setCurrentItem(current);
+                    } else {
+                        launchHomeScreen();
+                    }
+                }
+            });
+        }
     }
 
     private void addBottomDots(int currentPage) {
@@ -128,6 +121,7 @@ public class OnBoarding extends AppCompatActivity {
     }
 
     private void launchHomeScreen() {
+        getSharedPreferences("BOOT_PREF", MODE_PRIVATE).edit().putBoolean("firstboot", false).commit();
         startActivity(new Intent(OnBoarding.this, MainActivity.class));
         finish();
     }

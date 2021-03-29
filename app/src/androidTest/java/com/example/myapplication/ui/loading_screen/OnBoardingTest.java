@@ -1,10 +1,13 @@
 package com.example.myapplication.ui.loading_screen;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.rule.ActivityTestRule;
 
@@ -32,9 +35,15 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
 public class OnBoardingTest {
-
     @Rule
-    public ActivityTestRule<OnBoarding> mActivityTestRule = new ActivityTestRule<>(OnBoarding.class);
+    public ActivityTestRule<OnBoarding> mActivityTestRule =
+            new ActivityTestRule<OnBoarding>(OnBoarding.class) {
+                @Override
+                protected void beforeActivityLaunched() {
+                    clearSharedPrefs(InstrumentationRegistry.getTargetContext()); // This clears the sharedPreferences of the app so the tests/app opens the introduction slides every time
+                    super.beforeActivityLaunched();
+                }
+            };
 
     private OnBoarding mActivity = null;
 
@@ -49,17 +58,50 @@ public class OnBoardingTest {
     }
 
     @Test
+    public void onBoardingShowsCorrectlyOnFirstLoad() {
+        assertNotNull("OnBoarding is not available", mActivity);
+        ViewInteraction imageView = onView(
+                allOf(withId(R.id.slider_image),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        imageView.check(matches(isDisplayed()));
+
+        ViewInteraction button = onView(
+                allOf(withId(R.id.skip_btn), withText("SKIP"),
+                        withParent(withParent(withId(android.R.id.content))),
+                        isDisplayed()));
+        button.check(matches(isDisplayed()));
+
+        ViewInteraction textView = onView(
+                allOf(withId(R.id.slider_desc), withText("Our map shows COVID severity of any place nearby or with-in the specified city. You can click on a city/neighborhood to display location related COVID information."),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView.check(matches(withText("Our map shows COVID severity of any place nearby or with-in the specified city. You can click on a city/neighborhood to display location related COVID information.")));
+
+        ViewInteraction textView2 = onView(
+                allOf(withId(R.id.slider_heading), withText("Access to COVID map wherever your are"),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView2.check(matches(withText("Access to COVID map wherever your are")));
+
+        ViewInteraction button2 = onView(
+                allOf(withId(R.id.next_btn), withText("NEXT"),
+                        withParent(allOf(withId(R.id.relativeLayout),
+                                withParent(IsInstanceOf.<View>instanceOf(android.view.ViewGroup.class)))),
+                        isDisplayed()));
+        button2.check(matches(isDisplayed()));
+    }
+
+    @Test
     public void splashScreenOpensWithOnBoarding() {
         assertNotNull("OnBoarding is not available", mActivity);
-//        View view = oActivity.findViewById(R.id.);
-//        assertNotNull(view);
         TypedValue outValue = new TypedValue();
         mActivity.getTheme().resolveAttribute(R.attr.splashThemeName, outValue, true);
         assertEquals("SplashThemeName", outValue.string);
     }
 
     @Test
-    public void onBoardingNextButtonFunctionsCorrectly() {
+    public void onBoardingNextButtonFunctionsCorrectly() { // Long test that checks that each intro page correctly loads sequentially by clicking the next button
         ViewInteraction imageView = onView(
                 allOf(withId(R.id.slider_image),
                         withParent(withParent(withId(R.id.slider))),
@@ -211,9 +253,50 @@ public class OnBoardingTest {
         frameLayout.check(matches(isDisplayed()));
     }
 
-    private static Matcher<View> childAtPosition(
-            final Matcher<View> parentMatcher, final int position) {
+    @Test
+    public void onBoardingSkipButtonFunctionsCorrectly() {
+        ViewInteraction imageView = onView(
+                allOf(withId(R.id.slider_image),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        imageView.check(matches(isDisplayed()));
 
+        ViewInteraction button = onView(
+                allOf(withId(R.id.skip_btn), withText("SKIP"),
+                        withParent(withParent(withId(android.R.id.content))),
+                        isDisplayed()));
+        button.check(matches(isDisplayed()));
+
+        ViewInteraction textView = onView(
+                allOf(withId(R.id.slider_heading), withText("Access to COVID map wherever your are"),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView.check(matches(withText("Access to COVID map wherever your are")));
+
+        ViewInteraction textView2 = onView(
+                allOf(withId(R.id.slider_desc), withText("Our map shows COVID severity of any place nearby or with-in the specified city. You can click on a city/neighborhood to display location related COVID information."),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView2.check(matches(withText("Our map shows COVID severity of any place nearby or with-in the specified city. You can click on a city/neighborhood to display location related COVID information.")));
+
+        ViewInteraction appCompatButton = onView(
+                allOf(withId(R.id.skip_btn), withText("Skip"),
+                        childAtPosition(
+                                childAtPosition(
+                                        withId(android.R.id.content),
+                                        0),
+                                1),
+                        isDisplayed()));
+        appCompatButton.perform(click());
+
+        ViewInteraction frameLayout = onView(
+                allOf(withId(R.id.map),
+                        withParent(withParent(withId(R.id.nav_host_fragment))),
+                        isDisplayed()));
+        frameLayout.check(matches(isDisplayed()));
+    }
+
+    private static Matcher<View> childAtPosition(final Matcher<View> parentMatcher, final int position) {
         return new TypeSafeMatcher<View>() {
             @Override
             public void describeTo(Description description) {
@@ -228,5 +311,16 @@ public class OnBoardingTest {
                         && view.equals(((ViewGroup) parent).getChildAt(position));
             }
         };
+    }
+
+    /**
+     * Clears everything in the SharedPreferences
+     */
+    private void clearSharedPrefs(Context context) {
+        SharedPreferences prefs =
+                context.getSharedPreferences("BOOT_PREF", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.commit();
     }
 }
