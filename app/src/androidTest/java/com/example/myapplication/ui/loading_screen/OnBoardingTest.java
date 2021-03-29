@@ -101,7 +101,7 @@ public class OnBoardingTest {
     }
 
     @Test
-    public void onBoardingNextButtonFunctionsCorrectly() { // Long test that checks that each intro page correctly loads sequentially by clicking the next button
+    public void onBoardingFirstNextButtonFunctionsAndDisplaysCorrectPage() {
         ViewInteraction imageView = onView(
                 allOf(withId(R.id.slider_image),
                         withParent(withParent(withId(R.id.slider))),
@@ -127,6 +127,45 @@ public class OnBoardingTest {
                         isDisplayed()));
         button.check(matches(isDisplayed()));
 
+        ViewInteraction appCompatButton = onView(
+                allOf(withId(R.id.next_btn), withText("Next"),
+                        childAtPosition(
+                                allOf(withId(R.id.relativeLayout),
+                                        childAtPosition(
+                                                withClassName(is("androidx.constraintlayout.widget.ConstraintLayout")),
+                                                2)),
+                                2),
+                        isDisplayed()));
+        appCompatButton.perform(click());
+
+        ViewInteraction imageView2 = onView(
+                allOf(withId(R.id.slider_image),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        imageView2.check(matches(isDisplayed()));
+
+        ViewInteraction textView3 = onView(
+                allOf(withId(R.id.slider_heading), withText("All your COVID related news in one spot"),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView3.check(matches(withText("All your COVID related news in one spot")));
+
+        ViewInteraction textView4 = onView(
+                allOf(withId(R.id.slider_desc), withText("You will able to view latest local COVID related news in the news page."),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView4.check(matches(withText("You will able to view latest local COVID related news in the news page.")));
+
+        ViewInteraction button2 = onView(
+                allOf(withId(R.id.next_btn), withText("NEXT"),
+                        withParent(allOf(withId(R.id.relativeLayout),
+                                withParent(IsInstanceOf.<View>instanceOf(android.view.ViewGroup.class)))),
+                        isDisplayed()));
+        button2.check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void onBoardingSecondNextButtonFunctionsAndDisplaysCorrectPage() {
         ViewInteraction appCompatButton = onView(
                 allOf(withId(R.id.next_btn), withText("Next"),
                         childAtPosition(
@@ -198,6 +237,117 @@ public class OnBoardingTest {
                                 withParent(IsInstanceOf.<View>instanceOf(android.view.ViewGroup.class)))),
                         isDisplayed()));
         button3.check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void onBoardingThirdNextButtonFunctionsAndDisplaysCorrectPage() {
+        ViewInteraction appCompatButton = onView(
+                allOf(withId(R.id.next_btn), withText("Next"),
+                        childAtPosition(
+                                allOf(withId(R.id.relativeLayout),
+                                        childAtPosition(
+                                                withClassName(is("androidx.constraintlayout.widget.ConstraintLayout")),
+                                                2)),
+                                2),
+                        isDisplayed()));
+        appCompatButton.perform(click());
+
+        ViewInteraction appCompatButton2 = onView(
+                allOf(withId(R.id.next_btn), withText("Next"),
+                        childAtPosition(
+                                allOf(withId(R.id.relativeLayout),
+                                        childAtPosition(
+                                                withClassName(is("androidx.constraintlayout.widget.ConstraintLayout")),
+                                                2)),
+                                2),
+                        isDisplayed()));
+        appCompatButton2.perform(click());
+
+        ViewInteraction imageView3 = onView(
+                allOf(withId(R.id.slider_image),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        imageView3.check(matches(isDisplayed()));
+
+        ViewInteraction textView5 = onView(
+                allOf(withId(R.id.slider_heading), withText("Automatically tracks location"),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView5.check(matches(withText("Automatically tracks location")));
+
+        ViewInteraction textView6 = onView(
+                allOf(withId(R.id.slider_desc), withText("If your location settings are enabled, the app will handle tracking for you. The app will send you COVID notifications, so you can get the latest COVID updates while on the move."),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView6.check(matches(withText("If your location settings are enabled, the app will handle tracking for you. The app will send you COVID notifications, so you can get the latest COVID updates while on the move.")));
+
+        ViewInteraction button3 = onView(
+                allOf(withId(R.id.next_btn), withText("NEXT"),
+                        withParent(allOf(withId(R.id.relativeLayout),
+                                withParent(IsInstanceOf.<View>instanceOf(android.view.ViewGroup.class)))),
+                        isDisplayed()));
+        button3.check(matches(isDisplayed()));
+
+        ViewInteraction appCompatButton3 = onView(
+                allOf(withId(R.id.next_btn), withText("Next"),
+                        childAtPosition(
+                                allOf(withId(R.id.relativeLayout),
+                                        childAtPosition(
+                                                withClassName(is("androidx.constraintlayout.widget.ConstraintLayout")),
+                                                2)),
+                                2),
+                        isDisplayed()));
+        appCompatButton3.perform(click());
+
+        ViewInteraction imageView4 = onView(
+                allOf(withId(R.id.slider_image),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        imageView4.check(matches(isDisplayed()));
+
+        ViewInteraction textView7 = onView(
+                allOf(withId(R.id.slider_heading), withText("You're in control"),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView7.check(matches(withText("You're in control")));
+
+        ViewInteraction textView8 = onView(
+                allOf(withId(R.id.slider_desc), withText("Your travel history will be stored for up to 21 days. It's easy to delete your past location history, and you can turn off location tracking at any time."),
+                        withParent(withParent(withId(R.id.slider))),
+                        isDisplayed()));
+        textView8.check(matches(withText("Your travel history will be stored for up to 21 days. It's easy to delete your past location history, and you can turn off location tracking at any time.")));
+
+        ViewInteraction button4 = onView(
+                allOf(withId(R.id.next_btn), withText("LETS GET STARTED"),
+                        withParent(allOf(withId(R.id.relativeLayout),
+                                withParent(IsInstanceOf.<View>instanceOf(android.view.ViewGroup.class)))),
+                        isDisplayed()));
+        button4.check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void onBoardingLetsGetStartedButtonFunctionsAndDisplaysMain() {
+        ViewInteraction appCompatButton = onView(
+                allOf(withId(R.id.next_btn), withText("Next"),
+                        childAtPosition(
+                                allOf(withId(R.id.relativeLayout),
+                                        childAtPosition(
+                                                withClassName(is("androidx.constraintlayout.widget.ConstraintLayout")),
+                                                2)),
+                                2),
+                        isDisplayed()));
+        appCompatButton.perform(click());
+
+        ViewInteraction appCompatButton2 = onView(
+                allOf(withId(R.id.next_btn), withText("Next"),
+                        childAtPosition(
+                                allOf(withId(R.id.relativeLayout),
+                                        childAtPosition(
+                                                withClassName(is("androidx.constraintlayout.widget.ConstraintLayout")),
+                                                2)),
+                                2),
+                        isDisplayed()));
+        appCompatButton2.perform(click());
 
         ViewInteraction appCompatButton3 = onView(
                 allOf(withId(R.id.next_btn), withText("Next"),
