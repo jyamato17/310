@@ -44,6 +44,12 @@ public class OnBoarding extends AppCompatActivity {
 //        }
 //        getSharedPreferences("BOOT_PREF", MODE_PRIVATE).edit().putBoolean("firstboot", false).commit();
 
+        //MAYBE THIS INSTEAD OF UP ABOVE?
+//        SharedPreferences sp = getSharedPreferences("OURINFO", MODE_PRIVATE);
+//        Editor ed = sp.edit();
+//        ed.putBoolean("active", true);
+//        ed.commit();
+
         // Making notification bar transparent
         if (Build.VERSION.SDK_INT >= 21) {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
