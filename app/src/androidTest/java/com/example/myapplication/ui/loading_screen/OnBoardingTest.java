@@ -404,7 +404,7 @@ public class OnBoardingTest {
     }
 
     @Test
-    public void onBoardingSkipButtonFunctionsCorrectly() {
+    public void onBoardingSkipButtonFunctionsAndDisplaysMain() {
         ViewInteraction imageView = onView(
                 allOf(withId(R.id.slider_image),
                         withParent(withParent(withId(R.id.slider))),
