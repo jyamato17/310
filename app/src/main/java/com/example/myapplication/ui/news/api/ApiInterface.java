@@ -16,6 +16,7 @@ public interface ApiInterface {
             @Query("keywordLoc") String keywordLoc,
             @Query("lang") String language,
             @Query("resultType") String resultType,
+            @Query("country") String country,
             @Query("conceptUri") String concept,
             @Query("articlesSortBy") String sortBy,
             @Query("articlesCount") String articleCount,

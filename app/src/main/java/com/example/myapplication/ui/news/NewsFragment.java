@@ -106,6 +106,7 @@ public class NewsFragment extends Fragment
 
         String[] tempKeywords = {location, "covid"};
         String concept = "https://en.wikipedia.org/wiki/Coronavirus";
+        String country = "https://en.wikipedia.org/wiki/United_States";
 
         Call<News> call;
         call = apiInterface.getLocalSearch(
@@ -113,6 +114,7 @@ public class NewsFragment extends Fragment
                 "body",
                 "eng",
                 "articles",
+                country,
                 concept,
                 "date",
                 "20",
