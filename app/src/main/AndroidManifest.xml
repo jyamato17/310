@@ -19,10 +19,6 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCwfjrfItOUvm4UghiumD_5ZLskxjaBE_A" />
         <activity
-            android:name="com.example.myapplication.ui.map.MapsActivity"
-            android:label="activity_maps" >
-        </activity>
-        <activity
             android:name=".ui.news.NewsDetailActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"/>
 
