@@ -133,7 +133,7 @@ public class MapFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mMapView.onDestroy();
+//        mMapView.onDestroy();
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
@@ -121,6 +123,16 @@ public class OnBoarding extends AppCompatActivity {
     }
 
     private void launchHomeScreen() {
+        //Check and set dark mode toggle on start up
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean chk_night = sp.getBoolean("NIGHT",false);
+        if (chk_night){
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
+        else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         getSharedPreferences("BOOT_PREF", MODE_PRIVATE).edit().putBoolean("firstboot", false).commit();
         startActivity(new Intent(OnBoarding.this, MainActivity.class));
         finish();

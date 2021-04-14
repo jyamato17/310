@@ -17,6 +17,9 @@
     <color name="accent">#ff4081</color>
     <color name="white_transparent">#cccccc</color>
 
+    <color name="nav_background">#ffffff</color>
+    <color name="nav_icon_pressed">#000000</color>
+
     <!-- dots inactive colors -->
     <color name="dot_dark_screen1">#d1395c</color>
     <color name="dot_dark_screen2">#14a895</color>
