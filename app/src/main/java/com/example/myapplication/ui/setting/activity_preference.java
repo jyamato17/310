@@ -1,7 +1,9 @@
 package com.example.myapplication.ui.setting;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.Notification;
+import android.content.ComponentCallbacks2;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -33,7 +35,7 @@ import androidx.core.content.ContextCompat;
 import java.util.prefs.Preferences;
 
 
-public class activity_preference extends PreferenceActivity {
+public class activity_preference extends PreferenceActivity implements ComponentCallbacks2 {
 
     private FusedLocationProviderClient fusedLocationClient;
     private final static int PERMISSION_REQUEST_CODE = 1;
@@ -45,20 +47,34 @@ public class activity_preference extends PreferenceActivity {
 
         Preference button = findPreference("BUTTON");
 
+        ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
+        Long used_mem = memoryInfo.totalMem-memoryInfo.availMem;
+
+        used_mem  *= Double.valueOf(9.31 * Math.pow(10,-10)).longValue();
+        String str_sum = Long.toString(used_mem);
+        Preference mem = findPreference("CACHE");
+        mem.setSummary(str_sum + " GB");
+
+
+        if (!memoryInfo.lowMemory) {
+            // Do memory intensive work ...
+            mem.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    // delete the cache memory
+
+                    return true;
+                }
+            });
+        }
+
+
         button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 //code for what you want it to do
 
                 setContentView(R.layout.popwindow);
-
-//                DisplayMetrics dm = new DisplayMetrics();
-//                getWindowManager().getDefaultDisplay().getRealMetrics(dm);
-//
-//                int width = dm.widthPixels;
-//                int height = dm.heightPixels;
-//
-//                getWindow().setLayout((int)(width * .8), (int)(height * .6));
 
                 return true;
             }
@@ -84,6 +100,74 @@ public class activity_preference extends PreferenceActivity {
 
         Load_setting();
 
+    }
+
+    // Get a MemoryInfo object for the device's current memory status.
+    private ActivityManager.MemoryInfo getAvailableMemory() {
+        ActivityManager activityManager = (ActivityManager) this.getSystemService(ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(memoryInfo);
+        return memoryInfo;
+    }
+
+    /**
+     * Release memory when the UI becomes hidden or when system resources become low.
+     * @param level the memory-related event that was raised.
+     */
+    public void onTrimMemory(int level) {
+
+        // Determine which lifecycle or system event was raised.
+        switch (level) {
+
+            case ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN:
+
+                /*
+                   Release any UI objects that currently hold memory.
+
+                   The user interface has moved to the background.
+                */
+
+                break;
+
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE:
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW:
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL:
+
+                /*
+                   Release any memory that your app doesn't need to run.
+
+                   The device is running low on memory while the app is running.
+                   The event raised indicates the severity of the memory-related event.
+                   If the event is TRIM_MEMORY_RUNNING_CRITICAL, then the system will
+                   begin killing background processes.
+                */
+
+                break;
+
+            case ComponentCallbacks2.TRIM_MEMORY_BACKGROUND:
+            case ComponentCallbacks2.TRIM_MEMORY_MODERATE:
+            case ComponentCallbacks2.TRIM_MEMORY_COMPLETE:
+
+                /*
+                   Release as much memory as the process can.
+
+                   The app is on the LRU list and the system is running low on memory.
+                   The event raised indicates where the app sits within the LRU list.
+                   If the event is TRIM_MEMORY_COMPLETE, the process will be one of
+                   the first to be terminated.
+                */
+
+                break;
+
+            default:
+                /*
+                  Release any non-critical data structures.
+
+                  The app received an unrecognized memory level value
+                  from the system. Treat this as a generic low-memory message.
+                */
+                break;
+        }
     }
 
     private void Load_setting() {

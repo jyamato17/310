@@ -57,6 +57,11 @@
             android:summaryOff="Sharing is deactivated" />
     </PreferenceCategory>
 
+    <Preference
+        android:title="System Storage"
+        android:key="CACHE"
+        />
+
 
 
 
