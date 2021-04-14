@@ -8,10 +8,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +43,7 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
-import com.google.maps.android.heatmaps.WeightedLatLng;
+import com.google.maps.android.heatmaps.*;
 
 import org.json.JSONException;
 
@@ -53,6 +55,7 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -63,6 +66,7 @@ public class MapFragment extends Fragment {
     private int maxCases;
     private int minCases;
     Bitmap bitmap;
+    ArrayList<Integer> allCases = new ArrayList<>();
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSION_STORAGE = {
@@ -83,7 +87,6 @@ public class MapFragment extends Fragment {
 
         mMapView.onResume(); // needed to get the map to display immediately
 
-
         try {
             MapsInitializer.initialize(getActivity().getApplicationContext());
         } catch (Exception e) {
@@ -91,10 +94,10 @@ public class MapFragment extends Fragment {
         }
 
         verifyStoragePermission(getActivity());
-        ImageView imageView = rootView.findViewById(R.id.screenshot_image);
+        View view = rootView.findViewById(R.id.legend);
         FloatingActionButton button = rootView.findViewById(R.id.share_button);
         button.setOnClickListener(v -> {
-            takeScreenshot(mMapView);
+            takeScreenshot(view);
         });
 
         mMapView.getMapAsync(new OnMapReadyCallback() {
@@ -103,11 +106,11 @@ public class MapFragment extends Fragment {
                 googleMap = mMap;
 
                 // For dropping a marker at a point on the Map
-                LatLng sydney = new LatLng(34.021338007781054, -118.28794802694372);
+                LatLng losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
                 //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(10).build();
+                CameraPosition cameraPosition = new CameraPosition.Builder().target(losAngeles).zoom(10).build();
                 googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
                 addHeatMap();
@@ -133,7 +136,7 @@ public class MapFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mMapView.onDestroy();
+//        mMapView.onDestroy();
     }
 
     @Override
@@ -156,16 +159,10 @@ public class MapFragment extends Fragment {
         HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
                 .weightedData(latLngs)
                 .radius(50)
+                .maxIntensity(50000.0d)
                 .build();
         // Add a tile overlay to the map, using the heat map tile provider.
         TileOverlay overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-
-
-        try {
-            readItems();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 
     private List<WeightedLatLng> readItems() throws JSONException {
@@ -232,11 +229,21 @@ public class MapFragment extends Fragment {
                 if (Integer.parseInt(cases) < this.minCases && Integer.parseInt(cases) != 0)
                     this.minCases = Integer.parseInt(cases);
 
+                allCases.add(Integer.parseInt(cases));
+
+                if (Double.parseDouble(cases) == 491858.0f) {
+                    Log.d("STATE", cases);
+                }
+
                 if (city != null) {
+<<<<<<< HEAD
                     WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), 1);
                     googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
                             .snippet("Cases: " + city.getCases())
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+=======
+                    WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), Double.parseDouble(cases));
+>>>>>>> 586d928e17198e362c95a2a8fbbcc65307a76838
                     result.add(coord);
                 }
 
@@ -245,6 +252,7 @@ public class MapFragment extends Fragment {
             e.printStackTrace();
         }
 
+        meanMedianMode();
         return result;
     }
 
@@ -256,7 +264,7 @@ public class MapFragment extends Fragment {
         textView.setText("" + maxCases);
     }
 
-    private void takeScreenshot(MapView view) {
+    private void takeScreenshot(View view) {
 
         googleMap.setOnMapLoadedCallback(() -> googleMap.snapshot(new GoogleMap.SnapshotReadyCallback() {
             @Override
@@ -278,10 +286,19 @@ public class MapFragment extends Fragment {
 
                     bitmap = snapshot;
 
+                    view.setDrawingCacheEnabled(true);
+                    Bitmap legend = Bitmap.createBitmap(view.getDrawingCache());
+                    view.setDrawingCacheEnabled(false);
+
+                    Bitmap combined = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+                    Canvas canvas = new Canvas(combined);
+                    canvas.drawBitmap(bitmap, 0, 0, null);
+                    canvas.drawBitmap(legend, 0, bitmap.getHeight() - legend.getHeight(), null);
+
 //This logic is used to save file at given location with the given filename and compress the Image Quality.
                     File imageFile = new File(path);
                     FileOutputStream fileOutputStream = new FileOutputStream(imageFile);
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream);
+                    combined.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream);
                     fileOutputStream.flush();
                     fileOutputStream.close();
 
@@ -375,6 +392,21 @@ public class MapFragment extends Fragment {
         public LatLng getCoordinates() {
             return new LatLng(this.latitiude, this.longitude);
         }
+    }
+
+    public void meanMedianMode() {
+        double mean = 0, median = 0, mode = 0;
+
+        for (int i = 0; i < allCases.size(); i++) {
+            mean += (double)allCases.indexOf(i);
+        }
+
+        mean /= allCases.size();
+
+        Collections.sort(allCases);
+
+        int middle = allCases.size() / 2;
+
     }
 
 }
