@@ -27,6 +27,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -175,10 +176,14 @@ public class activity_preference extends PreferenceActivity implements Component
 
         boolean chk_night = sp.getBoolean("NIGHT",false);
         if (chk_night){
+            setTheme(R.style.SettingStyleDarkMode);
             getListView().setBackgroundColor(Color.parseColor("#222222"));
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
         else {
+            setTheme(R.style.SettingStyle);
             getListView().setBackgroundColor(Color.parseColor("#ffffff"));
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
 
 
@@ -189,10 +194,14 @@ public class activity_preference extends PreferenceActivity implements Component
                 boolean yes = (boolean) obj;
 
                 if (yes) {
+                    setTheme(R.style.SettingStyleDarkMode);
                     getListView().setBackgroundColor(Color.parseColor("#222222"));
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                 }
                 else {
+                    setTheme(R.style.SettingStyle);
                     getListView().setBackgroundColor(Color.parseColor("#ffffff"));
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 }
                 return true;
             }
@@ -319,7 +328,5 @@ public class activity_preference extends PreferenceActivity implements Component
         Load_setting();
         super.onResume();
     }
-
-
 
 }

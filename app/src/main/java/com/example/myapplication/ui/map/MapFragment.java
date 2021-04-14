@@ -27,6 +27,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
@@ -34,8 +35,10 @@ import androidx.fragment.app.Fragment;
 import com.example.myapplication.R;
 
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -133,7 +136,7 @@ public class MapFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mMapView.onDestroy();
+//        mMapView.onDestroy();
     }
 
     @Override
@@ -213,6 +216,8 @@ public class MapFragment extends Fragment {
                     if (cities.get(i).getName().trim().equals(name.trim())) {
                         System.out.println(name.trim());
                         city = cities.get(i);
+                        city.addCases(lines[1]);
+                        city.addDeaths(lines[3]);
                         break;
                     }
                 }
@@ -231,7 +236,14 @@ public class MapFragment extends Fragment {
                 }
 
                 if (city != null) {
+<<<<<<< HEAD
+                    WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), 1);
+                    googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
+                            .snippet("Cases: " + city.getCases())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+=======
                     WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), Double.parseDouble(cases));
+>>>>>>> 586d928e17198e362c95a2a8fbbcc65307a76838
                     result.add(coord);
                 }
 
@@ -243,6 +255,7 @@ public class MapFragment extends Fragment {
         meanMedianMode();
         return result;
     }
+
 
     public void createLegend(View view) {
         TextView textView = (TextView) view.findViewById(R.id.map_legend_text1);
@@ -342,11 +355,34 @@ public class MapFragment extends Fragment {
         private Double latitiude;
         private Double longitude;
         private String name;
+        private String cases;
+        private String deaths;
 
         public City(String name, String latitude, String longitude) {
             this.latitiude = Double.parseDouble(latitude);
             this.longitude = Double.parseDouble(longitude);
             this.name = name;
+
+        }
+
+        public void addCases(String cases)
+        {
+            this.cases = cases;
+        }
+
+        public void addDeaths(String deaths)
+        {
+            this.deaths = deaths;
+        }
+
+        public String getCases()
+        {
+            return this.cases;
+        }
+
+        public String getDeaths()
+        {
+            return this.deaths;
         }
 
         public String getName() {
