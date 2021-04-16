@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.animation.ArgbEvaluator;
@@ -67,7 +69,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class MapFragment extends Fragment {
+public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClickListener {
 
     MapView mMapView;
     private GoogleMap googleMap;
@@ -77,7 +79,8 @@ public class MapFragment extends Fragment {
     List<TestSite> testSites = new ArrayList<>();
     Bitmap bitmap;
     ArrayList<Integer> allCases = new ArrayList<>();
-    List<Marker> markers = new ArrayList<>();
+    List<Marker> cityMarkers = new ArrayList<>();
+    List<Marker> siteMarkers = new ArrayList<>();
     boolean isSites = false;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -136,29 +139,6 @@ public class MapFragment extends Fragment {
         });
 
         return rootView;
-    }
-
-    private void changePins(View view) {
-        FloatingActionButton button = view.findViewById(R.id.testSites);
-
-        for (Marker marker : markers) {
-            if (marker.getTag().equals("city")) {
-                if (isSites) { marker.setVisible(true); }
-                else { marker.setVisible(false); }
-            }
-
-            else if (marker.getTag().equals("testSite")) {
-                if (isSites) { marker.setVisible(false); }
-                else { marker.setVisible(true); }
-            }
-        }
-        if (isSites) {
-            button.setImageResource(R.drawable.ic_baseline_content_paste_24);
-            isSites = false;
-        } else {
-            button.setImageResource(R.drawable.ic_baseline_location_on_24);
-            isSites = true;
-        }
     }
 
     @Override
@@ -232,17 +212,13 @@ public class MapFragment extends Fragment {
                 String[] lines = line.split(", ");
                 cities.add(new City(lines[0].trim(), lines[1], lines[2]));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        try {
             line = readerSites.readLine();
             while ((line = readerSites.readLine()) != null) {
                 String[] lines = line.split(";");
-                testSites.add(new TestSite(lines[0].trim(), lines[1].trim(), lines[2], lines[3]));
+                testSites.add(new TestSite(lines[0].trim(), lines[1].trim(), lines[2].trim(), lines[3], lines[4]));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -264,9 +240,9 @@ public class MapFragment extends Fragment {
                 } else if (name.contains("Unincorporated")) {
                     name = name.substring(17);
                 }
+
                 City city = null;
                 for (int i = 0; i < cities.size(); i++) {
-                    //System.out.println(cities.get(i).getName().trim() + " " + name.trim());
                     if (cities.get(i).getName().trim().equals(name.trim())) {
                         System.out.println(name.trim());
                         city = cities.get(i);
@@ -287,81 +263,114 @@ public class MapFragment extends Fragment {
 
                 if (city != null) {
                     WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), Double.parseDouble(cases));
-                    //WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), Double.parseDouble(cases));
                     result.add(coord);
                 }
-
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        meanMedianMode();
         return result;
+    }
+
+    private void changePins(View view) {
+        FloatingActionButton button = view.findViewById(R.id.testSites);
+
+        for (Marker city : cityMarkers) {
+            if (isSites) { city.setVisible(true); }
+            else { city.setVisible(false); }
+        }
+
+        for (Marker site : siteMarkers) {
+            if (isSites) { site.setVisible(false); }
+            else { site.setVisible(true); }
+        }
+
+        if (isSites) {
+            button.setImageResource(R.drawable.ic_baseline_content_paste_24);
+            isSites = false;
+        } else {
+            button.setImageResource(R.drawable.ic_baseline_location_on_24);
+            isSites = true;
+        }
     }
 
     public void createMarkers() {
         Marker tempMarker;
+        BitmapDescriptor bitmapDescriptor;
         Collections.sort(allCases);
         int size = allCases.size();
 
         for (City city : cities) {
             if (Double.parseDouble(city.getCases()) < allCases.get(size / 5)) {
-                tempMarker = googleMap.addMarker(new MarkerOptions()
-                        .position(city.getCoordinates())
-                        .title(city.getName())
-                        .snippet("Cases: " + city.getCases())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
             }
 
             else if (Double.parseDouble(city.cases) < allCases.get(size * 2 / 5)) {
-                tempMarker = googleMap.addMarker(new MarkerOptions()
-                        .position(city.getCoordinates())
-                        .title(city.getName())
-                        .snippet("Cases: " + city.getCases())
-                        .icon(getMarkerIcon("#DAF7A6")));
+                bitmapDescriptor = getMarkerIcon("#DAF7A6");
             }
 
             else if (Double.parseDouble(city.cases) < allCases.get(size * 3 / 5)) {
-                tempMarker = googleMap.addMarker(new MarkerOptions()
-                        .position(city.getCoordinates())
-                        .title(city.getName())
-                        .snippet("Cases: " + city.getCases())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW);
             }
 
             else if (Double.parseDouble(city.cases) < allCases.get(size * 4 / 5)) {
-                tempMarker = googleMap.addMarker(new MarkerOptions()
-                        .position(city.getCoordinates())
-                        .title(city.getName())
-                        .snippet("Cases: " + city.getCases())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE);
             }
 
             else {
-                tempMarker = googleMap.addMarker(new MarkerOptions()
-                        .position(city.getCoordinates())
-                        .title(city.getName())
-                        .snippet("Cases: " + city.getCases())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
             }
 
+            tempMarker = googleMap.addMarker(new MarkerOptions()
+                    .position(city.getCoordinates())
+                    .title(city.getName())
+                    .snippet("Cases: " + city.getCases())
+                    .icon(bitmapDescriptor));
+
             tempMarker.setTag("city");
-            markers.add(tempMarker);
+            cityMarkers.add(tempMarker);
         }
 
         for (TestSite site : testSites) {
             tempMarker = googleMap.addMarker(new MarkerOptions()
                     .position(site.getCoordinates())
                     .title(site.getName())
-                    .snippet("Address: " + site.getAddress())
+                    .snippet("Address: " + site.getAddress() + "\nPhone: " + site.getPhone())
                     .visible(false)
                     .icon(BitmapDescriptorFactory
                             .fromBitmap(getBitmapFromVectorDrawable(R.drawable.ic_testing_site))));
 
             tempMarker.setTag("testSite");
-            markers.add(tempMarker);
+            siteMarkers.add(tempMarker);
         }
+
+        googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                LinearLayout info = new LinearLayout(getContext());
+                info.setOrientation(LinearLayout.VERTICAL);
+
+                TextView title = new TextView(getContext());
+                title.setTextColor(Color.BLACK);
+                title.setTypeface(null, Typeface.BOLD);
+                title.setText(marker.getTitle());
+
+                TextView snippet = new TextView(getContext());
+                snippet.setTextColor(Color.GRAY);
+                snippet.setText(marker.getSnippet());
+
+                info.addView(title);
+                info.addView(snippet);
+
+                return info;
+            }
+        });
     }
 
     public void createLegend(View view) {
@@ -476,6 +485,11 @@ public class MapFragment extends Fragment {
         return bitmap;
     }
 
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+
+    }
+
     class City {
         private Double latitude;
         private Double longitude;
@@ -524,13 +538,14 @@ public class MapFragment extends Fragment {
         private final Double longitude;
         private final String name;
         private final String address;
-        //private final String phone;
+        private final String phone;
 
-        public TestSite(String name, String address, String latitude, String longitude) {
+        public TestSite(String name, String address,String phone, String latitude, String longitude) {
             this.latitude = Double.parseDouble(latitude);
             this.longitude = Double.parseDouble(longitude);
             this.name = name;
             this.address = address;
+            this.phone = phone;
         }
 
         public String getName() {
@@ -541,15 +556,13 @@ public class MapFragment extends Fragment {
             return address;
         }
 
+        public String getPhone() {
+            return phone;
+        }
+
         public LatLng getCoordinates() {
             return new LatLng(this.latitude, this.longitude);
         }
-    }
-
-    public double meanMedianMode() {
-        double median = 0;
-        median = (double) allCases.get(allCases.size() / 2);
-        return median;
     }
 }
 
