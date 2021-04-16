@@ -10,9 +10,11 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.renderscript.ScriptGroup;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,6 +33,7 @@ import com.google.android.gms.maps.MapsInitializer;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
@@ -41,6 +44,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
@@ -55,6 +59,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,8 +74,11 @@ public class MapFragment extends Fragment {
     private int maxCases;
     private int minCases;
     List<City> cities = new ArrayList<>();
+    List<TestSite> testSites = new ArrayList<>();
     Bitmap bitmap;
     ArrayList<Integer> allCases = new ArrayList<>();
+    List<Marker> markers = new ArrayList<>();
+    boolean isSites = false;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSION_STORAGE = {
@@ -99,9 +107,14 @@ public class MapFragment extends Fragment {
 
         verifyStoragePermission(getActivity());
         View view = rootView.findViewById(R.id.legend);
-        FloatingActionButton button = rootView.findViewById(R.id.share_button);
-        button.setOnClickListener(v -> {
+        FloatingActionButton shareButton = rootView.findViewById(R.id.share_button);
+        shareButton.setOnClickListener(v -> {
             takeScreenshot(view);
+        });
+
+        FloatingActionButton testSitesButton = rootView.findViewById(R.id.testSites);
+        testSitesButton.setOnClickListener(v -> {
+            changePins(rootView);
         });
 
         mMapView.getMapAsync(new OnMapReadyCallback() {
@@ -123,6 +136,29 @@ public class MapFragment extends Fragment {
         });
 
         return rootView;
+    }
+
+    private void changePins(View view) {
+        FloatingActionButton button = view.findViewById(R.id.testSites);
+
+        for (Marker marker : markers) {
+            if (marker.getTag().equals("city")) {
+                if (isSites) { marker.setVisible(true); }
+                else { marker.setVisible(false); }
+            }
+
+            else if (marker.getTag().equals("testSite")) {
+                if (isSites) { marker.setVisible(false); }
+                else { marker.setVisible(true); }
+            }
+        }
+        if (isSites) {
+            button.setImageResource(R.drawable.ic_baseline_content_paste_24);
+            isSites = false;
+        } else {
+            button.setImageResource(R.drawable.ic_baseline_location_on_24);
+            isSites = true;
+        }
     }
 
     @Override
@@ -160,9 +196,9 @@ public class MapFragment extends Fragment {
             e.printStackTrace();
         }
 
-        createMarkerColor();
-        /*
-        HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
+        createMarkers();
+
+        /*HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
                 .weightedData(latLngs)
                 .radius(50)
                 .maxIntensity(50000.0d)
@@ -176,12 +212,15 @@ public class MapFragment extends Fragment {
 
         BufferedReader reader = null;
         BufferedReader readerCases = null;
+        BufferedReader readerSites = null;
 
         try {
             reader = new BufferedReader(
-                    new InputStreamReader(getContext().getAssets().open("City_Locations.csv"), "UTF-8"));
+                    new InputStreamReader(getContext().getAssets().open("City_Locations.csv"), StandardCharsets.UTF_8));
             readerCases = new BufferedReader(
-                    new InputStreamReader(getContext().getAssets().open("covidcases-deaths.csv"), "UTF-8"));
+                    new InputStreamReader(getContext().getAssets().open("covidcases-deaths.csv"), StandardCharsets.UTF_8));
+            readerSites = new BufferedReader(
+                    new InputStreamReader(getContext().getAssets().open("testing_locations.csv"), StandardCharsets.UTF_8));
         } catch (IOException e) {
             //log the exception
         }
@@ -194,6 +233,16 @@ public class MapFragment extends Fragment {
                 cities.add(new City(lines[0].trim(), lines[1], lines[2]));
             }
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            line = readerSites.readLine();
+            while ((line = readerSites.readLine()) != null) {
+                String[] lines = line.split(";");
+                testSites.add(new TestSite(lines[0].trim(), lines[1].trim(), lines[2], lines[3]));
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -251,37 +300,67 @@ public class MapFragment extends Fragment {
         return result;
     }
 
-    public void createMarkerColor() {
+    public void createMarkers() {
+        Marker tempMarker;
+        Collections.sort(allCases);
+        int size = allCases.size();
+
         for (City city : cities) {
-            if (Double.parseDouble(city.getCases()) < (maxCases * 0.005)) {
-                googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
+            if (Double.parseDouble(city.getCases()) < allCases.get(size / 5)) {
+                tempMarker = googleMap.addMarker(new MarkerOptions()
+                        .position(city.getCoordinates())
+                        .title(city.getName())
                         .snippet("Cases: " + city.getCases())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
             }
 
-            else if (Double.parseDouble(city.cases) < (maxCases * 0.01)) {
-                googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
+            else if (Double.parseDouble(city.cases) < allCases.get(size * 2 / 5)) {
+                tempMarker = googleMap.addMarker(new MarkerOptions()
+                        .position(city.getCoordinates())
+                        .title(city.getName())
                         .snippet("Cases: " + city.getCases())
                         .icon(getMarkerIcon("#DAF7A6")));
             }
 
-            else if (Double.parseDouble(city.cases) < (maxCases * 0.02)) {
-                googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
+            else if (Double.parseDouble(city.cases) < allCases.get(size * 3 / 5)) {
+                tempMarker = googleMap.addMarker(new MarkerOptions()
+                        .position(city.getCoordinates())
+                        .title(city.getName())
                         .snippet("Cases: " + city.getCases())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
             }
 
-            else if (Double.parseDouble(city.cases) < (maxCases * 0.03)) {
-                googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
+            else if (Double.parseDouble(city.cases) < allCases.get(size * 4 / 5)) {
+                tempMarker = googleMap.addMarker(new MarkerOptions()
+                        .position(city.getCoordinates())
+                        .title(city.getName())
                         .snippet("Cases: " + city.getCases())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
             }
 
             else {
-                googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
+                tempMarker = googleMap.addMarker(new MarkerOptions()
+                        .position(city.getCoordinates())
+                        .title(city.getName())
                         .snippet("Cases: " + city.getCases())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
             }
+
+            tempMarker.setTag("city");
+            markers.add(tempMarker);
+        }
+
+        for (TestSite site : testSites) {
+            tempMarker = googleMap.addMarker(new MarkerOptions()
+                    .position(site.getCoordinates())
+                    .title(site.getName())
+                    .snippet("Address: " + site.getAddress())
+                    .visible(false)
+                    .icon(BitmapDescriptorFactory
+                            .fromBitmap(getBitmapFromVectorDrawable(R.drawable.ic_testing_site))));
+
+            tempMarker.setTag("testSite");
+            markers.add(tempMarker);
         }
     }
 
@@ -385,15 +464,27 @@ public class MapFragment extends Fragment {
         return BitmapDescriptorFactory.defaultMarker(hsv[0]);
     }
 
+    public Bitmap getBitmapFromVectorDrawable(int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(getContext(), drawableId);
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
+
     class City {
-        private Double latitiude;
+        private Double latitude;
         private Double longitude;
         private String name;
         private String cases;
         private String deaths;
 
         public City(String name, String latitude, String longitude) {
-            this.latitiude = Double.parseDouble(latitude);
+            this.latitude = Double.parseDouble(latitude);
             this.longitude = Double.parseDouble(longitude);
             this.name = name;
 
@@ -424,25 +515,42 @@ public class MapFragment extends Fragment {
         }
 
         public LatLng getCoordinates() {
-            return new LatLng(this.latitiude, this.longitude);
+            return new LatLng(this.latitude, this.longitude);
         }
     }
 
-    public void meanMedianMode() {
-        double mean = 0, median = 0, mode = 0;
+    class TestSite {
+        private final Double latitude;
+        private final Double longitude;
+        private final String name;
+        private final String address;
+        //private final String phone;
 
-        for (int i = 0; i < allCases.size(); i++) {
-            mean += (double)allCases.indexOf(i);
+        public TestSite(String name, String address, String latitude, String longitude) {
+            this.latitude = Double.parseDouble(latitude);
+            this.longitude = Double.parseDouble(longitude);
+            this.name = name;
+            this.address = address;
         }
 
-        mean /= allCases.size();
+        public String getName() {
+            return name;
+        }
 
-        Collections.sort(allCases);
+        public String getAddress() {
+            return address;
+        }
 
-        int middle = allCases.size() / 2;
-
+        public LatLng getCoordinates() {
+            return new LatLng(this.latitude, this.longitude);
+        }
     }
 
+    public double meanMedianMode() {
+        double median = 0;
+        median = (double) allCases.get(allCases.size() / 2);
+        return median;
+    }
 }
 
 
