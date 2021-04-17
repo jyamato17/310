@@ -3,6 +3,7 @@ package com.example.myapplication.ui.news;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.util.Pair;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
@@ -27,11 +29,20 @@ import com.example.myapplication.ui.news.api.ApiInterface;
 import com.example.myapplication.ui.news.models.Article;
 import com.example.myapplication.ui.news.models.News;
 import com.example.myapplication.ui.news.models.Result;
+import com.google.gson.JsonArray;
 
+import org.apache.commons.text.WordUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -47,8 +58,8 @@ public class NewsFragment extends Fragment
     private TextView topHeadline;
     private SwipeRefreshLayout swipeRefreshLayout;
     private RelativeLayout errorLayout;
-    private ImageView errorImage;
-    private TextView errorTitle, errorMessage;
+    private ImageView errorImage, weatherIcon;
+    private TextView errorTitle, errorMessage, weatherTemperature, weatherDescription, weatherCity;
     private Button btnRetry;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -58,6 +69,7 @@ public class NewsFragment extends Fragment
         super.onCreate(savedInstanceState);
 
         setRetainInstance(true);
+        getWeather(null);
 
         return root;
     }
@@ -85,6 +97,11 @@ public class NewsFragment extends Fragment
         errorTitle = getActivity().findViewById(R.id.errorTitle);
         errorMessage = getActivity().findViewById(R.id.errorMessage);
         btnRetry = getActivity().findViewById(R.id.btnRetry);
+
+        weatherIcon = getActivity().findViewById(R.id.weather_image);
+        weatherTemperature = getActivity().findViewById(R.id.temperature);
+        weatherDescription = getActivity().findViewById(R.id.weather_description);
+        weatherCity = getActivity().findViewById(R.id.weather_city);
     }
 
     @Override
@@ -223,5 +240,123 @@ public class NewsFragment extends Fragment
             }
         });
 
+    }
+
+    private void getWeather(String city) {
+        OkHttpClient client = new OkHttpClient();
+
+        String url;
+        if (city == null) { city = "Los Angeles"; }
+
+        url = "https://api.openweathermap.org/data/2.5/weather?q="+ city +"&appid=0ecc105e1d5c38e6bed33998ea13aecd&units=imperial";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        try {
+            okhttp3.Response response = client.newCall(request).execute();
+            String finalCity = city;
+            client.newCall(request).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, IOException e) {
+                    System.out.println("Failed");
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+                    String responseData = response.body().string();
+                    try {
+                        JSONObject json = new JSONObject(responseData);
+                        JSONArray array = json.getJSONArray("weather");
+                        JSONObject object = array.getJSONObject(0);
+
+                        String description = object.getString("description");
+                        String icons = object.getString("icon");
+
+                        JSONObject temp = json.getJSONObject("main");
+                        Double temperature = temp.getDouble("temp");
+
+                        description = WordUtils.capitalize(description);
+                        
+                        String tempVal = Math.round(temperature) + " °C";
+                        setText(weatherTemperature, tempVal);
+                        setText(weatherDescription, description);
+                        setText(weatherCity, finalCity);
+                        setImage(weatherIcon, icons);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setText(final TextView text, final String value) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text.setText(value);
+            }
+        });
+    }
+
+    private void setImage(final ImageView imageView, final String value) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                switch (value) {
+                    case "01d":
+                    case "01n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d01d_icon, null));
+                        break;
+                    case "02d":
+                    case "02n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d02d_icon, null));
+                        break;
+                    case "03d":
+                    case "03n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d03d_icon, null));
+                        break;
+                    case "04d":
+                    case "04n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d04d_icon, null));
+                        break;
+                    case "09d":
+                    case "09n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d09d_icon, null));
+                        break;
+                    case "10d":
+                    case "10n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d10d_icon, null));
+                        break;
+                    case "11d":
+                    case "11n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d11d_icon, null));
+                        break;
+                    case "13d":
+                    case "13n":
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.d13d_icon, null));
+                        break;
+                    default:
+                        imageView.setImageDrawable(
+                                ResourcesCompat.getDrawable(getResources(), R.drawable.weather_icon, null));
+                }
+            }
+        });
     }
 }
