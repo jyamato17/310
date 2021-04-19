@@ -50,16 +50,18 @@ public class activity_preference extends PreferenceActivity implements Component
 
         ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
         Long used_mem = memoryInfo.totalMem-memoryInfo.availMem;
+        double mem = used_mem.doubleValue();
 
-        used_mem  *= Double.valueOf(9.31 * Math.pow(10,-10)).longValue();
-        String str_sum = Long.toString(used_mem);
-        Preference mem = findPreference("CACHE");
-        mem.setSummary(str_sum + " GB");
+        mem  *= Double.valueOf(9.31 * Math.pow(10,-10));
+        mem = Math.round(mem*100.0)/100.0;
+        String str_sum = Double.toString(mem);
+        Preference mem_pref = findPreference("CACHE");
+        mem_pref.setSummary(str_sum + " GB");
 
 
         if (!memoryInfo.lowMemory) {
             // Do memory intensive work ...
-            mem.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            mem_pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     // delete the cache memory
