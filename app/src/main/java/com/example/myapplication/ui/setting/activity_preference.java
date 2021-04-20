@@ -59,17 +59,17 @@ public class activity_preference extends PreferenceActivity implements Component
         mem_pref.setSummary(str_sum + " GB");
 
 
-        if (!memoryInfo.lowMemory) {
-            // Do memory intensive work ...
-            mem_pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    // delete the cache memory
-
-                    return true;
-                }
-            });
-        }
+//        if (!memoryInfo.lowMemory) {
+//            // Do memory intensive work ...
+//            mem_pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+//                @Override
+//                public boolean onPreferenceClick(Preference preference) {
+//                    // delete the cache memory
+//
+//                    return true;
+//                }
+//            });
+//        }
 
 
         button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -83,23 +83,23 @@ public class activity_preference extends PreferenceActivity implements Component
             }
         });
 
-        Preference button_noti = findPreference("NOTIF");
-        button_noti.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                //code for what you want it to do
-
-//                DisplayMetrics dm = new DisplayMetrics();
-//                getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+//        Preference button_noti = findPreference("NOTIF");
+//        button_noti.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+//            @Override
+//            public boolean onPreferenceClick(Preference preference) {
+//                //code for what you want it to do
 //
-//                int width = dm.widthPixels;
-//                int height = dm.heightPixels;
+////                DisplayMetrics dm = new DisplayMetrics();
+////                getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+////
+////                int width = dm.widthPixels;
+////                int height = dm.heightPixels;
+////
+////                getWindow().setLayout((int)(width * .8), (int)(height * .6));
 //
-//                getWindow().setLayout((int)(width * .8), (int)(height * .6));
-
-                return true;
-            }
-        });
+//                return true;
+//            }
+//        });
 
         Load_setting();
 
