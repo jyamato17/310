@@ -3,6 +3,7 @@ package com.example.myapplication.ui.map;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -236,14 +237,14 @@ public class MapFragment extends Fragment {
                 }
 
                 if (city != null) {
-<<<<<<< HEAD
+
                     WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), 1);
                     googleMap.addMarker(new MarkerOptions().position(city.getCoordinates()).title(city.getName())
                             .snippet("Cases: " + city.getCases())
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-=======
-                    WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), Double.parseDouble(cases));
->>>>>>> 586d928e17198e362c95a2a8fbbcc65307a76838
+
+                    //WeightedLatLng coord = new WeightedLatLng(city.getCoordinates(), Double.parseDouble(cases));
+
                     result.add(coord);
                 }
 
@@ -410,5 +411,3 @@ public class MapFragment extends Fragment {
     }
 
 }
-
-
