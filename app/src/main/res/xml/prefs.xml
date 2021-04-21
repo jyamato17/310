@@ -7,11 +7,6 @@
         android:key="BUTTON"
         android:summary="About the Team and App"
         />
-    <Preference
-        android:title="Notify me"
-        android:key="NOTIF"
-        android:summary="Notification setting"
-        />
 
     <PreferenceCategory
         android:id="@+id/nightMode"
@@ -56,6 +51,11 @@
             android:summaryOn="Sharing is activated"
             android:summaryOff="Sharing is deactivated" />
     </PreferenceCategory>
+
+    <Preference
+        android:title="System Storage"
+        android:key="CACHE"
+        />
 
 
 
