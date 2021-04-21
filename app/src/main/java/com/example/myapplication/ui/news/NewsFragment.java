@@ -61,6 +61,7 @@ public class NewsFragment extends Fragment
     private ImageView errorImage, weatherIcon;
     private TextView errorTitle, errorMessage, weatherTemperature, weatherDescription, weatherCity;
     private Button btnRetry;
+    private String city = null;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -69,7 +70,7 @@ public class NewsFragment extends Fragment
         super.onCreate(savedInstanceState);
 
         setRetainInstance(true);
-        getWeather(null);
+        getWeather();
 
         return root;
     }
@@ -106,10 +107,11 @@ public class NewsFragment extends Fragment
 
     @Override
     public void onRefresh() {
-        LoadJson("");
+        LoadJson();
     }
 
-    public void LoadJson(String location) {
+    public void LoadJson() {
+        String location = this.city;
 
         errorLayout.setVisibility(View.GONE);
         swipeRefreshLayout.setVisibility(View.VISIBLE);
@@ -117,7 +119,7 @@ public class NewsFragment extends Fragment
 
         ApiInterface apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
-        if (location.isEmpty()) {
+        if (location == null) {
             location = "los angeles";
         }
 
@@ -216,7 +218,7 @@ public class NewsFragment extends Fragment
                 new Runnable() {
                     @Override
                     public void run() {
-                        LoadJson("keyword");
+                        LoadJson();
                     }
                 }
         );
@@ -239,10 +241,13 @@ public class NewsFragment extends Fragment
                 onLoadingSwipeRefresh();
             }
         });
-
     }
 
-    private void getWeather(String city) {
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    private void getWeather() {
         OkHttpClient client = new OkHttpClient();
 
         String url;
