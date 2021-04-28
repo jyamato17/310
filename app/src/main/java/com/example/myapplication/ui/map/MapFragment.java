@@ -89,7 +89,6 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
         mCallBack.sendCity(city);
     }
 
-    /*
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -108,7 +107,7 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
     public void onDetach() {
         mCallBack = null;
         super.onDetach();
-    }*/
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -145,7 +144,7 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
             @Override
             public void onMapReady(GoogleMap mMap) {
                 googleMap = mMap;
-                /*
+
                 googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(Marker marker) {
@@ -154,7 +153,7 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                         }
                         return false;
                     }
-                });*/
+                });
 
                 // For dropping a marker at a point on the Map
                 LatLng losAngeles = new LatLng(34.021338007781054, -118.28794802694372);

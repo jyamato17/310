@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.news;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 import com.example.myapplication.ui.news.api.ApiClient;
 import com.example.myapplication.ui.news.api.ApiInterface;
@@ -61,7 +63,7 @@ public class NewsFragment extends Fragment
     private ImageView errorImage, weatherIcon;
     private TextView errorTitle, errorMessage, weatherTemperature, weatherDescription, weatherCity;
     private Button btnRetry;
-    private String city = null;
+    MainActivity mainActivity;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -75,6 +77,13 @@ public class NewsFragment extends Fragment
         return root;
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        mainActivity = (MainActivity) context;
+    }
+    
     @Override
     public void onActivityCreated(Bundle savedInstance) {
 
@@ -111,7 +120,7 @@ public class NewsFragment extends Fragment
     }
 
     public void LoadJson() {
-        String location = this.city;
+        String location = mainActivity.getCurrCity();
 
         errorLayout.setVisibility(View.GONE);
         swipeRefreshLayout.setVisibility(View.VISIBLE);
@@ -130,7 +139,7 @@ public class NewsFragment extends Fragment
         Call<News> call;
         call = apiInterface.getLocalSearch(
                 tempKeywords,
-                "body",
+                "title",
                 "eng",
                 "articles",
                 country,
@@ -243,14 +252,15 @@ public class NewsFragment extends Fragment
         });
     }
 
-    public void setCity(String city) {
-        this.city = city;
-    }
+    //public void setCity(String city) {
+      //  this.city = city;
+    //}
 
     private void getWeather() {
         OkHttpClient client = new OkHttpClient();
 
         String url;
+        String city = mainActivity.getCurrCity();
         if (city == null) { city = "Los Angeles"; }
 
         url = "https://api.openweathermap.org/data/2.5/weather?q="+ city +"&appid=0ecc105e1d5c38e6bed33998ea13aecd&units=imperial";

@@ -22,8 +22,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-public class MainActivity extends AppCompatActivity {
-        //implements MapFragment.PinClicked {
+public class MainActivity extends AppCompatActivity implements MapFragment.PinClicked {
+
+    String currCity = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,13 +44,17 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navView, navController);
     }
 
-    /*
-    @Override
+    public String getCurrCity() {
+        return currCity;
+    }
+
+    //@Override
     public void sendCity(String city) {
-        getSupportFragmentManager().executePendingTransactions();
+        /*getSupportFragmentManager().executePendingTransactions();
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         NewsFragment news = (NewsFragment) navHostFragment.getChildFragmentManager().getFragments().get(0);
-        news.setCity(city);
-    }*/
+        news.setCity(city);*/
+        currCity = city;
+    }
 
 }
