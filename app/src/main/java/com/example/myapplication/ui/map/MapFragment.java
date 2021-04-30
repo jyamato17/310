@@ -1,9 +1,9 @@
 package com.example.myapplication.ui.map;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -15,17 +15,13 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.renderscript.ScriptGroup;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.animation.ArgbEvaluator;
 
 import com.example.myapplication.BuildConfig;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -33,7 +29,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -48,10 +43,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.TileOverlay;
-import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.*;
 
 import org.json.JSONException;
@@ -62,9 +54,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -83,11 +73,41 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
     List<Marker> siteMarkers = new ArrayList<>();
     boolean isSites = false;
 
+    PinClicked mCallBack;
+
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSION_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    public interface PinClicked {
+        void sendCity(String city);
+    }
+
+    public void sendCity(String city) {
+        mCallBack.sendCity(city);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        Activity a = (Activity) context;
+
+        try {
+            mCallBack = (PinClicked) a;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(a.toString()
+                    + " must implement TextClicked");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        mCallBack = null;
+        super.onDetach();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -124,6 +144,16 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
             @Override
             public void onMapReady(GoogleMap mMap) {
                 googleMap = mMap;
+
+                googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        if (marker.getTag() == "city") {
+                            sendCity(marker.getTitle());
+                        }
+                        return false;
+                    }
+                });
 
                 // For dropping a marker at a point on the Map
                 LatLng losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
