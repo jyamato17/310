@@ -2,6 +2,7 @@ package com.example.myapplication.ui.map;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -12,7 +13,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,11 +26,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.BuildConfig;
 import com.google.android.gms.location.FusedLocationProviderClient;
+
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -70,6 +76,8 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
 
 
     MapView mMapView;
+    private boolean inLA;
+    private LatLng currentLocation;
     private GoogleMap googleMap;
     private int maxCases;
     private int minCases;
@@ -163,18 +171,88 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                     }
                 });
 
-                // For dropping a marker at a point on the Map
-                LatLng losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
+
+                //get current location
+                LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+                Criteria criteria = new Criteria();
+
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+
+                    return;
+                }
+                Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
+                LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
+                            @Override
+                            public void onLocationChanged(Location location) {
+                                if(!(location.getLatitude() > 33.021338007781054 && location.getLatitude() < 35.021338007781054 &&
+                                        location.getLongitude() > -119.28794802694372 && location.getLongitude() < -117.28794802694372))
+                                {
+                                    if(inLA) {
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                        builder.setTitle("Uh Oh!");
+                                        builder.setMessage("You are outside LA! Some functionality might not work.");
+                                        builder.setNegativeButton("OK", null);
+                                        AlertDialog dialog = builder.create();
+                                        dialog.show();
+                                        inLA = false;
+                                    }
+                                }
+                                else
+                                {
+                                    inLA = true;
+                                }
+                                if(!(location.getLatitude() > (currentLocation.latitude - .1) && location.getLatitude() < (currentLocation.latitude + .1) &&
+                                        location.getLongitude() > (currentLocation.longitude - .1) && location.getLongitude() < (currentLocation.longitude + .1)))
+                                {
+                                    CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(location.getLatitude(), location.getLongitude())).zoom(10).build();
+                                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                                    currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                }
+                            }
+                        });
+                LatLng losAngeles;
+                if(location != null)
+                {
+                    losAngeles = new LatLng(location.getLatitude(), location.getLongitude());
+                }
+                else {
+                    // For dropping a marker at a point on the Map
+                    losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
+                }
+                currentLocation = losAngeles;
                 //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
-//                CameraPosition cameraPosition = new CameraPosition.Builder().target(losAngeles).zoom(10).build();
-//                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                // Turn on the My Location layer and the related control on the map.
-                updateLocationUI();
+                CameraPosition cameraPosition = new CameraPosition.Builder().target(losAngeles).zoom(10).build();
+                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-                // Get the current location of the device and set the position of the map.
-                getDeviceLocation();
+               // set location
+                googleMap.setMyLocationEnabled(true);
+
+                if(!(losAngeles.latitude > 33.021338007781054 && losAngeles.latitude < 35.021338007781054 &&
+                losAngeles.longitude > -119.28794802694372 && losAngeles.longitude < -117.28794802694372))
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    builder.setTitle("Uh Oh!");
+                    builder.setMessage("You are outside LA! Some functionality might not work.");
+                    builder.setNegativeButton("OK", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    inLA=false;
+                }
+                inLA=true;
+
+                // Turn on the My Location layer and the related control on the map.
 
                 addHeatMap();
                 createLegend(rootView);
@@ -183,61 +261,6 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
 
         return rootView;
     }
-
-
-    private void updateLocationUI() {
-        if (googleMap == null) {
-            return;
-        }
-        try {
-            if (true) {
-                googleMap.setMyLocationEnabled(true);
-                googleMap.getUiSettings().setMyLocationButtonEnabled(true);
-            }
-//            else {
-//                googleMap.setMyLocationEnabled(false);
-//                googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-//                lastKnownLocation = null;
-//                getLocationPermission();
-//            }
-        } catch (SecurityException e)  {
-            Log.e("Exception: %s", e.getMessage());
-        }
-    }
-
-    private void getDeviceLocation() {
-        /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
-        try {
-            if (true) {
-                Task<Location> locationResult = FusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
-                            Location lastKnownLocation = task.getResult();
-                            if (lastKnownLocation != null) {
-                                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                        new LatLng(lastKnownLocation.getLatitude(),
-                                                lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-                            }
-                        } else {
-//                            Log.d(TAG, "Current location is null. Using defaults.");
-//                            Log.e(TAG, "Exception: %s", task.getException());
-
-                            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-                        }
-                    }
-                });
-            }
-        } catch (SecurityException e)  {
-            Log.e("Exception: %s", e.getMessage(), e);
-        }
-    }
-
 
     @Override
     public void onResume() {
