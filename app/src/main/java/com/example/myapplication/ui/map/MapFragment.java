@@ -12,10 +12,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,11 +26,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.BuildConfig;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -43,6 +48,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.maps.android.heatmaps.*;
 
@@ -60,6 +67,7 @@ import java.util.Date;
 import java.util.List;
 
 public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClickListener {
+
 
     MapView mMapView;
     private GoogleMap googleMap;
@@ -160,8 +168,13 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                 //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(losAngeles).zoom(10).build();
-                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+//                CameraPosition cameraPosition = new CameraPosition.Builder().target(losAngeles).zoom(10).build();
+//                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                // Turn on the My Location layer and the related control on the map.
+                updateLocationUI();
+
+                // Get the current location of the device and set the position of the map.
+                getDeviceLocation();
 
                 addHeatMap();
                 createLegend(rootView);
@@ -170,6 +183,61 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
 
         return rootView;
     }
+
+
+    private void updateLocationUI() {
+        if (googleMap == null) {
+            return;
+        }
+        try {
+            if (true) {
+                googleMap.setMyLocationEnabled(true);
+                googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+            }
+//            else {
+//                googleMap.setMyLocationEnabled(false);
+//                googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+//                lastKnownLocation = null;
+//                getLocationPermission();
+//            }
+        } catch (SecurityException e)  {
+            Log.e("Exception: %s", e.getMessage());
+        }
+    }
+
+    private void getDeviceLocation() {
+        /*
+         * Get the best and most recent location of the device, which may be null in rare
+         * cases when a location is not available.
+         */
+        try {
+            if (true) {
+                Task<Location> locationResult = FusedLocationProviderClient.getLastLocation();
+                locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        if (task.isSuccessful()) {
+                            // Set the map's camera position to the current location of the device.
+                            Location lastKnownLocation = task.getResult();
+                            if (lastKnownLocation != null) {
+                                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                        new LatLng(lastKnownLocation.getLatitude(),
+                                                lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                            }
+                        } else {
+//                            Log.d(TAG, "Current location is null. Using defaults.");
+//                            Log.e(TAG, "Exception: %s", task.getException());
+
+                            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+                        }
+                    }
+                });
+            }
+        } catch (SecurityException e)  {
+            Log.e("Exception: %s", e.getMessage(), e);
+        }
+    }
+
 
     @Override
     public void onResume() {
