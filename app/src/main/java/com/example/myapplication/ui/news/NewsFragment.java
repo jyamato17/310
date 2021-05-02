@@ -116,10 +116,10 @@ public class NewsFragment extends Fragment
 
     @Override
     public void onRefresh() {
-        LoadJson();
+        LoadJson(false);
     }
 
-    public void LoadJson() {
+    public void LoadJson(boolean retry) {
         String location = mainActivity.getCurrCity();
 
         errorLayout.setVisibility(View.GONE);
@@ -128,7 +128,7 @@ public class NewsFragment extends Fragment
 
         ApiInterface apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
 
-        if (location == null) {
+        if (location == null || retry) {
             location = "los angeles";
         }
 
@@ -172,8 +172,8 @@ public class NewsFragment extends Fragment
 
                     showErrorMessage(
                             R.drawable.no_result,
-                            "No Result",
-                            "Please Try Again!");
+                            "No results found within your area...",
+                            "Press the button to see LA news instead!");
                 }
                 swipeRefreshLayout.setRefreshing(false);
             }
@@ -194,42 +194,30 @@ public class NewsFragment extends Fragment
 
     //Call NewsDetailActivity when item is selected
     private void initListener() {
-        adapter.setOnItemClickListener(new Adapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-                ImageView imageView = view.findViewById(R.id.img);
-                Intent intent = new Intent(getActivity(), com.example.myapplication.ui.news.NewsDetailActivity.class);
+        adapter.setOnItemClickListener((Adapter.OnItemClickListener) (view, position) -> {
+            ImageView imageView = view.findViewById(R.id.img);
+            Intent intent = new Intent(getActivity(), NewsDetailActivity.class);
 
-                Result result = articles.getResults().get(position);
-                intent.putExtra("url", result.getUrl());
-                intent.putExtra("title", result.getTitle());
-                intent.putExtra("img", result.getImage());
-                intent.putExtra("date", result.getPublishedAt());
-                intent.putExtra("source", result.getSource().getTitle());
-                intent.putExtra("author", result.getAuthor());
+            Result result = articles.getResults().get(position);
+            intent.putExtra("url", result.getUrl());
+            intent.putExtra("title", result.getTitle());
+            intent.putExtra("img", result.getImage());
+            intent.putExtra("date", result.getPublishedAt());
+            intent.putExtra("source", result.getSource().getTitle());
+            intent.putExtra("author", result.getAuthor());
 
-                Pair<View, String> pair = Pair.create((View) imageView,
-                        ViewCompat.getTransitionName(imageView));
-                ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
-                        .makeSceneTransitionAnimation(getActivity(), pair);
+            Pair<View, String> pair = Pair.create((View) imageView,
+                    ViewCompat.getTransitionName(imageView));
+            ActivityOptionsCompat optionsCompat = ActivityOptionsCompat
+                    .makeSceneTransitionAnimation(getActivity(), pair);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    startActivity(intent, optionsCompat.toBundle());
-                } else {
-                    startActivity(intent);
-                }
-            }
+            startActivity(intent, optionsCompat.toBundle());
         });
     }
 
     private void onLoadingSwipeRefresh() {
         swipeRefreshLayout.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        LoadJson();
-                    }
-                }
+                () -> LoadJson(false)
         );
     }
 
@@ -244,17 +232,8 @@ public class NewsFragment extends Fragment
         errorTitle.setText(title);
         errorMessage.setText(message);
 
-        btnRetry.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onLoadingSwipeRefresh();
-            }
-        });
+        btnRetry.setOnClickListener(v -> LoadJson(true));
     }
-
-    //public void setCity(String city) {
-      //  this.city = city;
-    //}
 
     private void getWeather() {
         OkHttpClient client = new OkHttpClient();
@@ -272,105 +251,93 @@ public class NewsFragment extends Fragment
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        try {
-            okhttp3.Response response = client.newCall(request).execute();
-            String finalCity = city;
-            client.newCall(request).enqueue(new okhttp3.Callback() {
-                @Override
-                public void onFailure(okhttp3.Call call, IOException e) {
-                    System.out.println("Failed");
-                }
-
-                @Override
-                public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
-                    String responseData = response.body().string();
-                    try {
-                        JSONObject json = new JSONObject(responseData);
-                        JSONArray array = json.getJSONArray("weather");
-                        JSONObject object = array.getJSONObject(0);
-
-                        String description = object.getString("description");
-                        String icons = object.getString("icon");
-
-                        JSONObject temp = json.getJSONObject("main");
-                        Double temperature = temp.getDouble("temp");
-
-                        description = WordUtils.capitalize(description);
-                        
-                        String tempVal = Math.round(temperature) + " °C";
-                        setText(weatherTemperature, tempVal);
-                        setText(weatherDescription, description);
-                        setText(weatherCity, finalCity);
-                        setImage(weatherIcon, icons);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void setText(final TextView text, final String value) {
-        getActivity().runOnUiThread(new Runnable() {
+        //okhttp3.Response response = client.newCall(request).execute();
+        String finalCity = city;
+        client.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
-            public void run() {
-                text.setText(value);
+            public void onFailure(okhttp3.Call call, IOException e) {
+                System.out.println("Failed");
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+                String responseData = response.body().string();
+                try {
+                    JSONObject json = new JSONObject(responseData);
+                    JSONArray array = json.getJSONArray("weather");
+                    JSONObject object = array.getJSONObject(0);
+
+                    String description = object.getString("description");
+                    String icons = object.getString("icon");
+
+                    JSONObject temp = json.getJSONObject("main");
+                    Double temperature = temp.getDouble("temp");
+
+                    description = WordUtils.capitalize(description);
+
+                    String tempVal = Math.round(temperature) + "°C";
+                    setText(weatherTemperature, tempVal);
+                    setText(weatherDescription, description);
+                    setText(weatherCity, finalCity);
+                    setImage(weatherIcon, icons);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
             }
         });
     }
 
+    private void setText(final TextView text, final String value) {
+        getActivity().runOnUiThread(() -> text.setText(value));
+    }
+
     private void setImage(final ImageView imageView, final String value) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                switch (value) {
-                    case "01d":
-                    case "01n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d01d_icon, null));
-                        break;
-                    case "02d":
-                    case "02n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d02d_icon, null));
-                        break;
-                    case "03d":
-                    case "03n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d03d_icon, null));
-                        break;
-                    case "04d":
-                    case "04n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d04d_icon, null));
-                        break;
-                    case "09d":
-                    case "09n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d09d_icon, null));
-                        break;
-                    case "10d":
-                    case "10n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d10d_icon, null));
-                        break;
-                    case "11d":
-                    case "11n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d11d_icon, null));
-                        break;
-                    case "13d":
-                    case "13n":
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.d13d_icon, null));
-                        break;
-                    default:
-                        imageView.setImageDrawable(
-                                ResourcesCompat.getDrawable(getResources(), R.drawable.weather_icon, null));
-                }
+        getActivity().runOnUiThread(() -> {
+            switch (value) {
+                case "01d":
+                case "01n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d01d_icon, null));
+                    break;
+                case "02d":
+                case "02n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d02d_icon, null));
+                    break;
+                case "03d":
+                case "03n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d03d_icon, null));
+                    break;
+                case "04d":
+                case "04n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d04d_icon, null));
+                    break;
+                case "09d":
+                case "09n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d09d_icon, null));
+                    break;
+                case "10d":
+                case "10n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d10d_icon, null));
+                    break;
+                case "11d":
+                case "11n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d11d_icon, null));
+                    break;
+                case "13d":
+                case "13n":
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.d13d_icon, null));
+                    break;
+                default:
+                    imageView.setImageDrawable(
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.weather_icon, null));
             }
         });
     }

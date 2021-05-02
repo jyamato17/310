@@ -68,6 +68,10 @@ dependencies {
     
     implementation 'org.ocpsoft.prettytime:prettytime:4.0.1.Final'
 
+    // butter knife
+    implementation 'com.jakewharton:butterknife:10.2.3'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.3'
+
     // google maps
     implementation 'androidx.core:core-ktx:1.3.2'
     implementation 'androidx.appcompat:appcompat:1.2.0'
