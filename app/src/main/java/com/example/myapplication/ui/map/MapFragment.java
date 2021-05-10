@@ -19,8 +19,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -191,6 +194,8 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                 LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
                 Criteria criteria = new Criteria();
 
+                Location location = null;
+
                 if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
@@ -204,44 +209,43 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
 
                     return;
                 }
-                Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
-                LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
-                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
-                            @Override
-                            public void onLocationChanged(Location location) {
-                                // if outside LA
-                                if(!(location.getLatitude() > 33.021338007781054 && location.getLatitude() < 35.021338007781054 &&
-                                        location.getLongitude() > -119.28794802694372 && location.getLongitude() < -117.28794802694372))
-                                {
-                                    // alerts only if you changed from inside LA to outside
-                                    if(inLA) {
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                                        builder.setTitle("Uh Oh!");
-                                        builder.setMessage("You are outside LA! Some functionality might not work.");
-                                        builder.setNegativeButton("OK", null);
-                                        AlertDialog dialog = builder.create();
-                                        dialog.show();
-                                        inLA = false;
-                                    }
+                if(isLocationEnabled(getContext())) {
+                    location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
+                    LocationManager lm = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            // if outside LA
+                            if (!(location.getLatitude() > 33.021338007781054 && location.getLatitude() < 35.021338007781054 &&
+                                    location.getLongitude() > -119.28794802694372 && location.getLongitude() < -117.28794802694372)) {
+                                // alerts only if you changed from inside LA to outside
+                                if (inLA) {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                    builder.setTitle("Uh Oh!");
+                                    builder.setMessage("You are outside LA! Some functionality might not work.");
+                                    builder.setNegativeButton("OK", null);
+                                    AlertDialog dialog = builder.create();
+                                    dialog.show();
+                                    inLA = false;
                                 }
-                                else
-                                {
-                                    inLA = true;
-                                }
-
-                                // checks if you moved
-
-
-                                currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                                String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
-                                userLocation loc = new userLocation(LocalDate.now().toString(), timeStamp, currentLocation.latitude, currentLocation.longitude);
-                                dbOperations operations = new dbOperations(loc);
-                                Thread t = new Thread(operations);
-                                t.start();
+                            } else {
+                                inLA = true;
                             }
-                        });
-                LatLng losAngeles;
 
+                            // checks if you moved
+
+
+                            currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                            String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+                            userLocation loc = new userLocation(LocalDate.now().toString(), timeStamp, currentLocation.latitude, currentLocation.longitude);
+                            dbOperations operations = new dbOperations(loc);
+                            Thread t = new Thread(operations);
+                            t.start();
+                        }
+                    });
+
+                }
+                LatLng losAngeles;
                 if(location != null)
                 {
                     String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
@@ -256,7 +260,6 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                 }
 
 
-
                 currentLocation = losAngeles;
                 //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
@@ -267,18 +270,19 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                // set location
                 googleMap.setMyLocationEnabled(true);
 
-                if(!(losAngeles.latitude > 33.021338007781054 && losAngeles.latitude < 35.021338007781054 &&
-                losAngeles.longitude > -119.28794802694372 && losAngeles.longitude < -117.28794802694372))
-                {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                    builder.setTitle("Uh Oh!");
-                    builder.setMessage("You are outside LA! Some functionality might not work.");
-                    builder.setNegativeButton("OK", null);
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                    inLA=false;
+                if(isLocationEnabled(getContext())) {
+                    if (!(losAngeles.latitude > 33.021338007781054 && losAngeles.latitude < 35.021338007781054 &&
+                            losAngeles.longitude > -119.28794802694372 && losAngeles.longitude < -117.28794802694372)) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        builder.setTitle("Uh Oh!");
+                        builder.setMessage("You are outside LA! Some functionality might not work.");
+                        builder.setNegativeButton("OK", null);
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                        inLA = false;
+                    }
+                    inLA = true;
                 }
-                inLA=true;
 
                 // Turn on the My Location layer and the related control on the map.
 
@@ -765,6 +769,29 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
             System.out.println(lDb.locationDao().selectAll().toString());
 
         }
+
+    }
+
+    private static boolean isLocationEnabled(Context context) {
+        int locationMode = 0;
+        String locationProviders;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+            try {
+                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
+
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
+
+        }else{
+            locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            return !TextUtils.isEmpty(locationProviders);
+        }
+
 
     }
 
