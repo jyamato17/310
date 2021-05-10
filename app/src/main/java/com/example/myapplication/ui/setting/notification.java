@@ -30,8 +30,6 @@ public class notification extends Application{
             manager.createNotificationChannel(channel1);
 
         }
-
-
     }
 
 

@@ -9,8 +9,13 @@
         android:id="@+id/pop_window"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="App Version 1.0
-        \nTeam Member: Yifeng Yu, Cole Howard, Yo-Han Kang, Jonah Yamato, Yong Shin"
+        android:text="App Version 3.0
+        \nTeam Member: Yifeng Yu, Cole Howard, Yo-Han Kang, Jonah Yamato, Yong Shin
+        \n
+        \nWhat new about the current version:
+        \n1. You can check the memory usage in the setting page.
+        \n2. You can share the app by clicking the sharing icon in the map page.
+        \n3. You can check the weather condition in the top of the news page. "
         android:textColor="#ffffff"
 
         />

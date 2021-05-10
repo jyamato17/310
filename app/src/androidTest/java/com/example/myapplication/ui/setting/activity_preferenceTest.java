@@ -38,7 +38,8 @@ import org.junit.Test;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.*;
 
-public class activity_preferenceTest {
+public class
+activity_preferenceTest {
     @Rule
     public ActivityTestRule<activity_preference> pActivityTestRule
             = new ActivityTestRule<>(activity_preference.class);

@@ -57,6 +57,32 @@
         android:key="CACHE"
         />
 
+    <EditTextPreference
+        android:title="Text Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:key="txtTitle"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <EditTextPreference
+        android:title="Text Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:key="txtBody"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Preference
+        android:title="Send Notification"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:key="notify"
+        android:onClick="sendOnChannel"
+        android:layout_below="@+id/spinnerZodiac"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
 
 
 

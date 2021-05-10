@@ -3,7 +3,10 @@ package com.example.myapplication.ui.setting;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ComponentCallbacks2;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,18 +14,22 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.widget.EditText;
 
 import com.bumptech.glide.ListPreloader;
 import com.example.myapplication.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import androidx.annotation.Nullable;
@@ -40,13 +47,38 @@ public class activity_preference extends PreferenceActivity implements Component
 
     private FusedLocationProviderClient fusedLocationClient;
     private final static int PERMISSION_REQUEST_CODE = 1;
+    public static final String Channel_1_ID = "channel1";
+    private NotificationManagerCompat notificationManager;
+    private EditTextPreference txtBody;
+    private EditTextPreference txtTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
 
-        Preference button = findPreference("BUTTON");
+        notificationManager = NotificationManagerCompat.from(this);
+        txtBody = (EditTextPreference)findPreference("txtBody");
+        String textBody = txtBody.getText();
+
+        txtTitle = (EditTextPreference)findPreference("txtTitle");
+        String textT = txtBody.getText();
+
+        System.out.println("here is  " + textBody);
+
+        Preference b = findPreference("notify");
+        b.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                //code for what you want it to do
+                System.out.println("notify 1  ") ;
+                sendOnChannel();
+                System.out.println("notify 2 ");
+                return true;
+            }
+        });
+
+//        System.out.println(((EditText)findViewById(R.id.txtBody)).getText().toString())
 
         ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
         Long used_mem = memoryInfo.totalMem-memoryInfo.availMem;
@@ -57,21 +89,25 @@ public class activity_preference extends PreferenceActivity implements Component
         String str_sum = Double.toString(mem);
         Preference mem_pref = findPreference("CACHE");
         mem_pref.setSummary(str_sum + " GB");
+        Context context = this;
+        mem_pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    // delete the cache memory
+                    context.getCacheDir().delete();
+                    Preference mem_pref = findPreference("CACHE");
+                    mem_pref.setSummary("0 GB");
+                    return true;
+                }
+            });
 
 
 //        if (!memoryInfo.lowMemory) {
 //            // Do memory intensive work ...
-//            mem_pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-//                @Override
-//                public boolean onPreferenceClick(Preference preference) {
-//                    // delete the cache memory
 //
-//                    return true;
-//                }
-//            });
 //        }
 
-
+        Preference button = findPreference("BUTTON");
         button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
@@ -102,6 +138,20 @@ public class activity_preference extends PreferenceActivity implements Component
 //        });
 
         Load_setting();
+
+    }
+
+    public void sendOnChannel(){
+        String textT = txtBody.getText();
+        String textBody = txtBody.getText();
+        Notification notification = new NotificationCompat.Builder(this,Channel_1_ID)
+                .setSmallIcon(R.drawable.ic_one)
+                .setContentTitle(textT)
+                .setContentText(textBody)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .build();
+        notificationManager.notify(1, notification);
 
     }
 
@@ -209,19 +259,21 @@ public class activity_preference extends PreferenceActivity implements Component
             }
         });
 
-        boolean loc = sp.getBoolean("fetch_location", false);
-        if (loc){
-            fetchLocation();
-        }
-
 
         CheckBoxPreference chk_location = (CheckBoxPreference)findPreference("fetch_location");
         chk_location.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
             @Override
             public boolean onPreferenceChange(Preference preference, Object obj) {
                 boolean yes = (boolean) obj;
                 if(yes){
                     fetchLocation();
+                    System.out.println("here");
+                    chk_location.setChecked(true);
+                }
+                else {
+                    System.out.println("cancel");
+                    chk_location.setChecked(false);
                 }
 
                 return true;
@@ -264,19 +316,18 @@ public class activity_preference extends PreferenceActivity implements Component
             }
         });
     }
-
-
-
+    LocationRequest mLocationRequest = LocationRequest.create();
 
 
     private void fetchLocation() {
-
+        System.out.println("enter111");
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED) {
+            System.out.println("enter1");
 //            // You can use the API that requires the permission.
 //            fusedLocationClient.getLastLocation()
-//                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+//                    .addOnSuccessListener(new OnSuccessListener<Location>() {
 //                        @Override
 //                        public void onSuccess(Location location) {
 //                            // Got last known location. In some rare situations this can be null.
@@ -284,7 +335,7 @@ public class activity_preference extends PreferenceActivity implements Component
 //                                // Logic to handle location object
 //                                Double latitude = location.getLatitude();
 //                                Double longitude = location.getLongitude();
-//
+//                                System.out.println("lat is " + latitude + " longitutde is " + longitude);
 ////                                user_location.setText("Latitude = " + latitude + "\nLongitude = " + longitude);
 //
 //                            }
@@ -296,9 +347,10 @@ public class activity_preference extends PreferenceActivity implements Component
             // permission for a specific feature to behave as expected. In this UI,
             // include a "cancel" or "no thanks" button that allows the user to
             // continue using your app without granting the permission.
+            System.out.println("enter2");
             new AlertDialog.Builder(this)
                     .setTitle("require location permission")
-                    .setMessage("you have to give this permission to access the location")
+                    .setMessage("you have to give this permission to access the some functionalities in this app")
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -317,10 +369,13 @@ public class activity_preference extends PreferenceActivity implements Component
                     .show();
 
         } else {
+            System.out.println("enter3");
             // You can directly ask for the permission.
             ActivityCompat.requestPermissions(activity_preference.this,
-                    new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, PERMISSION_REQUEST_CODE
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, PERMISSION_REQUEST_CODE
             );
+
+
         }
 
     }
