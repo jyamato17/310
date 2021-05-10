@@ -2,6 +2,7 @@ package com.example.myapplication.ui.map;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -12,27 +13,49 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.BuildConfig;
+import com.example.myapplication.ui.database.locationDatabase;
+import com.google.android.gms.location.FusedLocationProviderClient;
+
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.room.ColumnInfo;
+import androidx.room.Dao;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.Insert;
+import androidx.room.PrimaryKey;
+import androidx.room.Query;
 
 import com.example.myapplication.R;
 
@@ -43,6 +66,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.maps.android.heatmaps.*;
 
@@ -53,15 +78,23 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClickListener {
 
+    private locationDatabase lDb;
     MapView mMapView;
+    private boolean inLA;
+    private LatLng currentLocation;
     private GoogleMap googleMap;
     private int maxCases;
     private int minCases;
@@ -114,6 +147,7 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
         View rootView = inflater.inflate(R.layout.activity_maps, container, false);
         setHasOptionsMenu(true);
 
+        lDb = locationDatabase.getInstance(getContext());
         this.maxCases = 0;
         this.minCases = 1000000;
 
@@ -155,18 +189,111 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                     }
                 });
 
-                // For dropping a marker at a point on the Map
-                LatLng losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
+
+                //get current location
+                LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+                Criteria criteria = new Criteria();
+
+                Location location = null;
+
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+
+                    return;
+                }
+                if(isLocationEnabled(getContext())) {
+                    location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
+                    LocationManager lm = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            // if outside LA
+                            if (!(location.getLatitude() > 33.021338007781054 && location.getLatitude() < 35.021338007781054 &&
+                                    location.getLongitude() > -119.28794802694372 && location.getLongitude() < -117.28794802694372)) {
+                                // alerts only if you changed from inside LA to outside
+                                if (inLA) {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                    builder.setTitle("Uh Oh!");
+                                    builder.setMessage("You are outside LA! Some functionality might not work.");
+                                    builder.setNegativeButton("OK", null);
+                                    AlertDialog dialog = builder.create();
+                                    dialog.show();
+                                    inLA = false;
+                                }
+                            } else {
+                                inLA = true;
+                            }
+
+                            // checks if you moved
+
+
+                            currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                            String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+                            userLocation loc = new userLocation(LocalDate.now().toString(), timeStamp, currentLocation.latitude, currentLocation.longitude);
+                            dbOperations operations = new dbOperations(loc);
+                            Thread t = new Thread(operations);
+                            t.start();
+                        }
+                    });
+
+                }
+                LatLng losAngeles;
+                if(location != null)
+                {
+                    String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+                    dbOperations operations = new dbOperations(new userLocation(LocalDate.now().toString(), timeStamp, location.getLatitude(), location.getLongitude()));
+                    Thread t = new Thread(operations);
+                    t.start();
+                    losAngeles = new LatLng(location.getLatitude(), location.getLongitude());
+                }
+                else {
+                    // For dropping a marker at a point on the Map
+                    losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
+                }
+
+
+                currentLocation = losAngeles;
                 //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
                 // For zooming automatically to the location of the marker
                 CameraPosition cameraPosition = new CameraPosition.Builder().target(losAngeles).zoom(10).build();
                 googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
+               // set location
+                googleMap.setMyLocationEnabled(true);
+
+                if(isLocationEnabled(getContext())) {
+                    if (!(losAngeles.latitude > 33.021338007781054 && losAngeles.latitude < 35.021338007781054 &&
+                            losAngeles.longitude > -119.28794802694372 && losAngeles.longitude < -117.28794802694372)) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        builder.setTitle("Uh Oh!");
+                        builder.setMessage("You are outside LA! Some functionality might not work.");
+                        builder.setNegativeButton("OK", null);
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                        inLA = false;
+                    }
+                    inLA = true;
+                }
+
+                // Turn on the My Location layer and the related control on the map.
+
                 addHeatMap();
                 createLegend(rootView);
             }
         });
+
+        dbOperationsGetLocations getLoc = new dbOperationsGetLocations("", "");
+        Thread t = new Thread(getLoc);
+        t.start();
 
         return rootView;
     }
@@ -520,6 +647,9 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
 
     }
 
+
+
+
     class City {
         private Double latitude;
         private Double longitude;
@@ -594,6 +724,79 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
             return new LatLng(this.latitude, this.longitude);
         }
     }
+
+
+    private class dbOperations implements Runnable {
+
+        private userLocation location;
+        public dbOperations(userLocation userLocation)
+        {
+            this.location = userLocation;
+        }
+
+        public void run()
+        {
+            userLocation lastLocation = lDb.locationDao().selectLast();
+            if(lastLocation == null)
+            {
+                lDb.locationDao().insertLocation(this.location);
+                return;
+            }
+            if(location == null)
+            {
+                return;
+            }
+            if(!(lastLocation.latitude < location.latitude + .05 && lastLocation.latitude > location.latitude - .05 &&
+                    lastLocation.longitude < location.longitude + .05 && lastLocation.longitude > location.longitude - .05 && lastLocation.date.compareTo(location.date) == 0))
+            {
+                lDb.locationDao().insertLocation(this.location);
+            }
+
+
+        }
+    }
+
+    private class dbOperationsGetLocations implements Runnable {
+        private String[] dates;
+
+        public dbOperationsGetLocations(String timeStart, String timeEnd)
+        {
+
+        }
+
+        public void run()
+        {
+            System.out.println(lDb.locationDao().selectAll().toString());
+
+        }
+
+    }
+
+    private static boolean isLocationEnabled(Context context) {
+        int locationMode = 0;
+        String locationProviders;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+            try {
+                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
+
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
+
+        }else{
+            locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            return !TextUtils.isEmpty(locationProviders);
+        }
+
+
+    }
+
+
 }
+
 
 
