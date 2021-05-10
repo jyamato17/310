@@ -742,8 +742,8 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
             {
                 return;
             }
-            if(!(lastLocation.latitude < location.latitude + .1 && lastLocation.latitude > location.latitude - .1 &&
-                    lastLocation.longitude < location.longitude + .1 && lastLocation.longitude > location.longitude - .1 && Integer.parseInt(lastLocation.time) > Integer.parseInt(location.time) + 30))
+            if(!(lastLocation.latitude < location.latitude + .05 && lastLocation.latitude > location.latitude - .05 &&
+                    lastLocation.longitude < location.longitude + .05 && lastLocation.longitude > location.longitude - .05 && lastLocation.date.compareTo(location.date) == 0))
             {
                 lDb.locationDao().insertLocation(this.location);
             }
