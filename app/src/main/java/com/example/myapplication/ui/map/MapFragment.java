@@ -733,6 +733,15 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
         public void run()
         {
             userLocation lastLocation = lDb.locationDao().selectLast();
+            if(lastLocation == null)
+            {
+                lDb.locationDao().insertLocation(this.location);
+                return;
+            }
+            if(location == null)
+            {
+                return;
+            }
             if(!(lastLocation.latitude < location.latitude + .1 && lastLocation.latitude > location.latitude - .1 &&
                     lastLocation.longitude < location.longitude + .1 && lastLocation.longitude > location.longitude - .1 && Integer.parseInt(lastLocation.time) > Integer.parseInt(location.time) + 30))
             {
