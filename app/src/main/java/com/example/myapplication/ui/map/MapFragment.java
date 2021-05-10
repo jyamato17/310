@@ -18,6 +18,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.format.DateFormat;
@@ -31,6 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.BuildConfig;
+import com.example.myapplication.ui.database.locationDatabase;
 import com.google.android.gms.location.FusedLocationProviderClient;
 
 import com.google.android.gms.location.LocationServices;
@@ -44,6 +46,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.room.ColumnInfo;
+import androidx.room.Dao;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.Insert;
+import androidx.room.PrimaryKey;
+import androidx.room.Query;
 
 import com.example.myapplication.R;
 
@@ -66,15 +75,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClickListener {
 
-
+    private locationDatabase lDb;
     MapView mMapView;
     private boolean inLA;
     private LatLng currentLocation;
@@ -130,6 +144,7 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
         View rootView = inflater.inflate(R.layout.activity_maps, container, false);
         setHasOptionsMenu(true);
 
+        lDb = locationDatabase.getInstance(getContext());
         this.maxCases = 0;
         this.minCases = 1000000;
 
@@ -194,9 +209,11 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                 lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
                             @Override
                             public void onLocationChanged(Location location) {
+                                // if outside LA
                                 if(!(location.getLatitude() > 33.021338007781054 && location.getLatitude() < 35.021338007781054 &&
                                         location.getLongitude() > -119.28794802694372 && location.getLongitude() < -117.28794802694372))
                                 {
+                                    // alerts only if you changed from inside LA to outside
                                     if(inLA) {
                                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                                         builder.setTitle("Uh Oh!");
@@ -211,24 +228,35 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                                 {
                                     inLA = true;
                                 }
-                                if(!(location.getLatitude() > (currentLocation.latitude - .1) && location.getLatitude() < (currentLocation.latitude + .1) &&
-                                        location.getLongitude() > (currentLocation.longitude - .1) && location.getLongitude() < (currentLocation.longitude + .1)))
-                                {
-                                    CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(location.getLatitude(), location.getLongitude())).zoom(10).build();
-                                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                                    currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                                }
+
+                                // checks if you moved
+
+
+                                currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+                                userLocation loc = new userLocation(LocalDate.now().toString(), timeStamp, currentLocation.latitude, currentLocation.longitude);
+                                dbOperations operations = new dbOperations(loc);
+                                Thread t = new Thread(operations);
+                                t.start();
                             }
                         });
                 LatLng losAngeles;
+
                 if(location != null)
                 {
+                    String timeStamp = new SimpleDateFormat("HHmmss").format(Calendar.getInstance().getTime());
+                    dbOperations operations = new dbOperations(new userLocation(LocalDate.now().toString(), timeStamp, location.getLatitude(), location.getLongitude()));
+                    Thread t = new Thread(operations);
+                    t.start();
                     losAngeles = new LatLng(location.getLatitude(), location.getLongitude());
                 }
                 else {
                     // For dropping a marker at a point on the Map
                     losAngeles = new LatLng(34.021338007781054, -118.28794802694372);
                 }
+
+
+
                 currentLocation = losAngeles;
                 //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
 
@@ -258,6 +286,10 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
                 createLegend(rootView);
             }
         });
+
+        dbOperationsGetLocations getLoc = new dbOperationsGetLocations("", "");
+        Thread t = new Thread(getLoc);
+        t.start();
 
         return rootView;
     }
@@ -611,6 +643,9 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
 
     }
 
+
+
+
     class City {
         private Double latitude;
         private Double longitude;
@@ -685,4 +720,47 @@ public class MapFragment extends Fragment implements GoogleMap.OnInfoWindowClick
             return new LatLng(this.latitude, this.longitude);
         }
     }
+
+
+    private class dbOperations implements Runnable {
+
+        private userLocation location;
+        public dbOperations(userLocation userLocation)
+        {
+            this.location = userLocation;
+        }
+
+        public void run()
+        {
+            userLocation lastLocation = lDb.locationDao().selectLast();
+            if(!(lastLocation.latitude < location.latitude + .1 && lastLocation.latitude > location.latitude - .1 &&
+                    lastLocation.longitude < location.longitude + .1 && lastLocation.longitude > location.longitude - .1 && Integer.parseInt(lastLocation.time) > Integer.parseInt(location.time) + 30))
+            {
+                lDb.locationDao().insertLocation(this.location);
+            }
+
+
+        }
+    }
+
+    private class dbOperationsGetLocations implements Runnable {
+        private String[] dates;
+
+        public dbOperationsGetLocations(String timeStart, String timeEnd)
+        {
+
+        }
+
+        public void run()
+        {
+            System.out.println(lDb.locationDao().selectAll().toString());
+
+        }
+
+    }
+
+
 }
+
+
+
