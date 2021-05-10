@@ -39,4 +39,12 @@ public class userLocation {
     {
         return(time + " " + date + " " + latitude + " " + longitude);
     }
+
+    public String getDate() { return date; }
+
+    public double getLatitude() { return latitude; }
+
+    public double getLongitude() { return longitude; }
+
+    public String getLocation() { return latitude + "," + longitude; }
 }
