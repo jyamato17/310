@@ -56,7 +56,7 @@ public class activity_preference extends PreferenceActivity implements Component
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
-
+        createNotificationChannel();
 
         notificationManager = NotificationManagerCompat.from(this);
         txtBody = (EditTextPreference)findPreference("txtBody");
