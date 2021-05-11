@@ -56,9 +56,10 @@ public class activity_preference extends PreferenceActivity implements Component
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
-
+        createNotificationChannel();
 
         notificationManager = NotificationManagerCompat.from(this);
+
         txtBody = (EditTextPreference)findPreference("txtBody");
         String textBody = txtBody.getText();
 
@@ -102,11 +103,6 @@ public class activity_preference extends PreferenceActivity implements Component
             });
 
 
-//        if (!memoryInfo.lowMemory) {
-//            // Do memory intensive work ...
-//
-//        }
-
         Preference button = findPreference("BUTTON");
         button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
@@ -138,7 +134,7 @@ public class activity_preference extends PreferenceActivity implements Component
     }
 
     public void sendOnChannel(){
-        System.out.println("notify hello") ;
+
         String textT = txtBody.getText();
         String textBody = txtBody.getText();
         Notification notification = new NotificationCompat.Builder(this,Channel_1_ID)
