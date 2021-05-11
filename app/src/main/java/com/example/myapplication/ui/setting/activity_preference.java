@@ -57,6 +57,7 @@ public class activity_preference extends PreferenceActivity implements Component
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
 
+
         notificationManager = NotificationManagerCompat.from(this);
         txtBody = (EditTextPreference)findPreference("txtBody");
         String textBody = txtBody.getText();
@@ -73,7 +74,6 @@ public class activity_preference extends PreferenceActivity implements Component
                 //code for what you want it to do
                 System.out.println("notify 1  ") ;
                 sendOnChannel();
-                System.out.println("notify 2 ");
                 return true;
             }
         });
@@ -119,29 +119,26 @@ public class activity_preference extends PreferenceActivity implements Component
             }
         });
 
-//        Preference button_noti = findPreference("NOTIF");
-//        button_noti.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-//            @Override
-//            public boolean onPreferenceClick(Preference preference) {
-//                //code for what you want it to do
-//
-////                DisplayMetrics dm = new DisplayMetrics();
-////                getWindowManager().getDefaultDisplay().getRealMetrics(dm);
-////
-////                int width = dm.widthPixels;
-////                int height = dm.heightPixels;
-////
-////                getWindow().setLayout((int)(width * .8), (int)(height * .6));
-//
-//                return true;
-//            }
-//        });
 
         Load_setting();
 
     }
 
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(Channel_1_ID, "channel1", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("This is channel 1");
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
     public void sendOnChannel(){
+        System.out.println("notify hello") ;
         String textT = txtBody.getText();
         String textBody = txtBody.getText();
         Notification notification = new NotificationCompat.Builder(this,Channel_1_ID)
