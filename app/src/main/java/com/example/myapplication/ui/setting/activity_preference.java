@@ -14,6 +14,9 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -40,6 +43,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
+import java.net.URL;
 import java.util.prefs.Preferences;
 
 
@@ -61,12 +65,8 @@ public class activity_preference extends PreferenceActivity implements Component
         notificationManager = NotificationManagerCompat.from(this);
 
         txtBody = (EditTextPreference)findPreference("txtBody");
-        String textBody = txtBody.getText();
 
         txtTitle = (EditTextPreference)findPreference("txtTitle");
-        String textT = txtBody.getText();
-
-        System.out.println("here is  " + textBody);
 
         Preference b = findPreference("notify");
         b.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -134,8 +134,9 @@ public class activity_preference extends PreferenceActivity implements Component
     }
 
     public void sendOnChannel(){
-
-        String textT = txtBody.getText();
+        Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        long vibration[] = {100, 500, 100, 500};
+        String textT = txtTitle.getText();
         String textBody = txtBody.getText();
         Notification notification = new NotificationCompat.Builder(this,Channel_1_ID)
                 .setSmallIcon(R.drawable.ic_one)
@@ -143,6 +144,9 @@ public class activity_preference extends PreferenceActivity implements Component
                 .setContentText(textBody)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setLights(Color.YELLOW, 200, 200)
+                .setSound(sound)
+                .setVibrate(vibration)
                 .build();
         notificationManager.notify(1, notification);
 
